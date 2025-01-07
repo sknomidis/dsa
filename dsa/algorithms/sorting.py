@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import heapq
-from typing import Callable, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
 ValueType = TypeVar("ValueType")
 
@@ -34,7 +34,7 @@ def bubble_sort(array: list[ValueType]) -> list[ValueType]:
 
     Complexity
     ----------
-    Time:  O(N**2)
+    Time: O(N**2)
     Space: O(1)
     """
     # Progressively sort elements
@@ -63,7 +63,7 @@ def heap_sort(array: list[ValueType]) -> list[ValueType]:
 
     Complexity
     ----------
-    Time:  O(N log N)
+    Time: O(N log N)
     Space: O(1)
     """
     # Construct heap (TODO: Use custom implementation)
@@ -71,7 +71,7 @@ def heap_sort(array: list[ValueType]) -> list[ValueType]:
     for _ in range(len(array)):
         heapq.heappush(heap, array.pop())
     # Successively extract minimum elements
-    return [heapq.heappop(array) for _ in range(len(array))]
+    return [heapq.heappop(heap) for _ in range(len(heap))]
 
 
 def insertion_sort(array: list[ValueType]) -> list[ValueType]:
@@ -96,7 +96,7 @@ def insertion_sort(array: list[ValueType]) -> list[ValueType]:
 
     Complexity
     ----------
-    Time:  O(N**2)
+    Time: O(N**2)
     Space: O(1)
     """
     # Loop over all elements that need to be sorted one-by-one
@@ -125,16 +125,16 @@ def merge_sort_top_down(array: list[ValueType]) -> list[ValueType]:
 
     Cons
     ----
-    - Not cache friendly
+    - Not cache friendly (not in-sort)
     - High memory
 
     Complexity
     ----------
-    Time:  O(N log N)
+    Time: O(N log N)
     Space: O(N)
     """
     source = array
-    target = source.copy()
+    target = array.copy()
 
     def mergesort(source: list[ValueType], target: list[ValueType], index_left: int, index_right: int) -> None:
         if index_right - index_left <= 1:
@@ -166,7 +166,7 @@ def _sort_and_merge(
         is_left_empty = index_sub_left == index_middle
         is_right_empty = index_sub_right == index_right
         should_merge_from_left = is_right_empty or (
-            not is_left_empty or source[index_sub_left] <= source[index_sub_right]  # The equality makes it stable
+            not is_left_empty and source[index_sub_left] <= source[index_sub_right]  # The equality makes it stable
         )
 
         if should_merge_from_left:
@@ -185,7 +185,7 @@ def merge_sort_bottom_up(array: list[ValueType]) -> list[ValueType]:
     element arrays, and only performs the merge.
     """
     source = array
-    target = source.copy()
+    target = array.copy()
     total_size = len(target)
 
     # Iteratively merge divided arrays at different scales
@@ -208,91 +208,40 @@ def merge_sort_bottom_up(array: list[ValueType]) -> list[ValueType]:
 
 
 def quicksort_lomuto(array: list[ValueType]) -> list[ValueType]:
-    """Efficient divide-and-conquer algorithm, based on Lomuto partitioning scheme.
+    """Efficient, general purpose algorithm based on Lomuto partitioning scheme.
 
-    Logic
-    -----
     The algorithm consists of recursively performing the following steps:
     1. Select the last element of the array as pivot.
     2. Partition the array, so that all smaller and larger elements are placed
     on the left and right of the pivot, respectively.
+    3. Repeat 1-2 for the two partitioned arrays
+
+    Pros
+    ----
+    - Cache friendly (in-place)
+    - Low memory usage
+
+    Cons
+    ----
+    - Not stable
+    - Poor worst-case performance
 
     Complexity
     ----------
     Time: O(N**2)
     Space: O(N)
-
-    Comparison
-    ----------
-    + Cache friendly
-    + Low memory usage
-    - Not stable
-    - Poor worst-case complexity
-
-    Notes
-    -----
-    Due to the way elements are re-arranged around the pivot, this is not a
-    stable algorithm. The space complexity is linear due to the recursive call
-    stack.
     """
-    array_output = list(array).copy()
-    _quicksort(
-        array_output,
-        index_left=0,
-        index_right=len(array_output),
-        partition=_partition_and_return_pivot_index_lomuto,
-    )
-    return array_output
 
+    def quicksort(index_left: int, index_right: int) -> None:
+        if index_right - index_left <= 1:
+            # No more splitting
+            return
+        index_pivot = _partition_and_return_pivot_index_lomuto(array, index_left, index_right)
+        quicksort(index_left, index_pivot)
+        quicksort(index_pivot + 1, index_right)
 
-def quicksort_hoare(array: list[ValueType]) -> list[ValueType]:
-    """
-    Efficient divide-and-conquer algorithm, based on Hoare partitioning scheme.
-
-    Logic
-    -----
-    The algorithm consists of recursively performing the following steps:
-    1. Select the first element of the array as pivot.
-    2. Partition the array, so that all smaller and larger elements are placed
-    on the left and right of the pivot, respectively.
-
-    Complexity
-    ----------
-    Time: O(N**2)
-    Space: O(N)
-
-    Comparison
-    ----------
-    + Cache friendly
-    + Low memory usage
-    - Not stable
-    - Poor worst-case complexity
-
-    Notes
-    -----
-    Due to the way elements are re-arranged around the pivot, this is not a
-    stable algorithm. The space complexity is linear due to the recursive call
-    stack.
-    """
-    array_output = list(array).copy()
-    _quicksort(
-        array_output,
-        index_left=0,
-        index_right=len(array_output),
-        partition=_partition_and_return_pivot_index_hoare,
-    )
-    return array_output
-
-
-_PartitionType = Callable[[list[ValueType], int, int], int]
-
-
-def _quicksort(array: list[ValueType], index_left: int, index_right: int, partition: _PartitionType) -> None:
-    if index_right - index_left <= 1:
-        return
-    index_pivot = partition(array, index_left, index_right)
-    _quicksort(array, index_left, index_pivot, partition)
-    _quicksort(array, index_pivot + 1, index_right, partition)
+    quicksort(index_left=0, index_right=len(array))
+    return array
 
 
 def _partition_and_return_pivot_index_lomuto(array: list[ValueType], index_left: int, index_right: int) -> int:
@@ -312,6 +261,24 @@ def _partition_and_return_pivot_index_lomuto(array: list[ValueType], index_left:
     # Move pivot after smaller element, and return its index.
     _swap_elements(array, index_pivot, index_right - 1)
     return index_pivot
+
+
+def quicksort_hoare(array: list[ValueType]) -> list[ValueType]:
+    """Efficient, general purpose algorithm based on Hoare partitioning scheme.
+
+    Similar to Lomuto, but selecting the first element of the array as pivot,
+    """
+
+    def quicksort(index_left: int, index_right: int) -> None:
+        if index_right - index_left <= 1:
+            # No more splitting
+            return
+        index_pivot = _partition_and_return_pivot_index_hoare(array, index_left, index_right)
+        quicksort(index_left, index_pivot)
+        quicksort(index_pivot + 1, index_right)
+
+    quicksort(index_left=0, index_right=len(array))
+    return array
 
 
 def _partition_and_return_pivot_index_hoare(array: list[ValueType], index_left: int, index_right: int) -> int:
@@ -339,32 +306,36 @@ def _partition_and_return_pivot_index_hoare(array: list[ValueType], index_left: 
 
 
 def selection_sort(array: list[ValueType]) -> list[ValueType]:
-    """
-    Simple algorithm constructing sorted array from smallest to largest element.
+    """Simple algorithm selecting smallest elements and moving them to the left.
 
-    Logic
-    -----
     It selects the smallest element one by one, and moves them to the end of the
     sorted portion of the array.
+
+    Pros
+    ----
+    - Cache friendly (in-place)
+    - Low memory
+
+    Cons
+    ----
+    - Not stable
+    - Poor performance for large input
 
     Complexity
     ----------
     Time: O(N**2)
     Space: O(1)
     """
-    array_output = list(array).copy()
-
     # Progressively construct sorted portion
-    for size_sorted in range(len(array_output) - 1):
+    for size_sorted in range(len(array) - 1):
         # Select smallest element in unsorted portion
         index_min = size_sorted
-        for index in range(size_sorted + 1, len(array_output)):
-            if array_output[index] < array_output[index_min]:
+        for index in range(size_sorted + 1, len(array)):
+            if array[index] < array[index_min]:
                 index_min = index
         # Move to end of sorted portion
-        _swap_elements(array_output, size_sorted, index_min)
-
-    return array_output
+        _swap_elements(array, size_sorted, index_min)
+    return array
 
 
 def _swap_elements(array: list[ValueType], index_1: int, index_2: int) -> None:
