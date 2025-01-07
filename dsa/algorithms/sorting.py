@@ -3,71 +3,77 @@
 from __future__ import annotations
 
 import heapq
-from typing import Callable, Protocol, Sequence, TypeVar
+from typing import Callable, Protocol, TypeVar
 
 ValueType = TypeVar("ValueType")
 
 
 class SortingAlgorithm(Protocol):
-    def __call__(self, array: Sequence[ValueType]) -> list[ValueType]:
+    """Place elements in the given list in ascending order."""
+
+    def __call__(self, array: list[ValueType]) -> list[ValueType]:
         pass
 
 
-def bubble_sort(array: Sequence[ValueType]) -> list[ValueType]:
-    """This is the simplest and worst-performing sorting algorithm.
+def bubble_sort(array: list[ValueType]) -> list[ValueType]:
+    """One of the simplest and worst-performing sorting algorithms.
 
-    Logic
-    -----
-    Repeatedly sweep the list swapping adjacent elements, until they are all
-    sorted.
+    Adjacent elements are repeatedly swapped if they are in the wrong order.
+    Large elements bubble up towards the end of the array, hence the name of
+    the algorithm.
+
+    Advantages:
+    - Simple
+    - Stable
+    - Low memory
+
+    Disadvantages:
+    - Too slow for large input
 
     Complexity
     ----------
     Time:  O(N**2)
     Space: O(1)
     """
-    array_output = list(array).copy()
-
-    n_unsorted = len(array_output)
-    while n_unsorted > 1:
-        # To avoid looping over the whole array at each pass, we store the index
-        # where the last sorted element was placed, and no longer look beyond it.
-        index_last_sorted = 0
-        for index in range(n_unsorted - 1):
-            if array_output[index] > array_output[index + 1]:
-                _swap_elements(array_output, index, index + 1)
-                index_last_sorted = index + 1
-        n_unsorted = index_last_sorted
-    return array_output
+    # Progressively sort elements
+    for _ in range(len(array)):
+        # Go through unsorted array and put adjacent elements in order
+        for index_bubble in range(len(array) - 1):
+            if array[index_bubble] > array[index_bubble + 1]:
+                _swap_elements(array, index_bubble, index_bubble + 1)
+    return array
 
 
-def _swap_elements(array: Sequence[ValueType], index_1: int, index_2: int) -> None:
-    if index_1 != index_2:
-        array[index_2], array[index_1] = array[index_1], array[index_2]
-
-
-def heap_sort(array: Sequence[ValueType]) -> list[ValueType]:
-    """Comparison-based sorting algorithm, using the binary heap data structure.
+def heap_sort(array: list[ValueType]) -> list[ValueType]:
+    """Sorting based on the heap data structure.
 
     Logic
     -----
-    Construct a heap binary tree, and iteratively extract smallest element.
+    Construct a min heap, and iteratively extract smallest element.
 
-    Although worse than quicksort in practice, it is often use as a fallback,
-    due to the favorable O(N log N) worst-case performance.
+    Advantages:
+    - Good worst-case performance
+    - Low memory
+
+    Disadvantages:
+    - Not stable
+    - Slower than merge sort
 
     Complexity
     ----------
     Time:  O(N log N)
-    Space: O(N)
+    Space: O(1)
     """
-    # TODO: Use custom Heap class
-    heap = list(array).copy()
-    heapq.heapify(heap)
-    return [heapq.heappop(heap) for _ in range(len(heap))]
+    # TODO: Use custom heap implementation
+    # Construct heap
+    heap = []
+    for _ in range(len(array)):
+        heapq.heappush(heap, array.pop())
+    # Successively extract minimum elements
+    return [heapq.heappop(array) for _ in range(len(array))]
 
 
-def insertion_sort(array: Sequence[ValueType]) -> list[ValueType]:
+def insertion_sort(array: list[ValueType]) -> list[ValueType]:
     """Simple sorting algorithm that builds sorted array one item at a time.
 
     Logic
@@ -95,7 +101,7 @@ def insertion_sort(array: Sequence[ValueType]) -> list[ValueType]:
     return array_output
 
 
-def merge_sort_top_down(array: Sequence[ValueType]) -> list[ValueType]:
+def merge_sort_top_down(array: list[ValueType]) -> list[ValueType]:
     """
     An efficient top-down, divide-and-conquer algorithm.
 
@@ -169,7 +175,7 @@ def _sort_and_merge(
             index_sub_right += 1
 
 
-def merge_sort_bottom_up(array: Sequence[ValueType]) -> list[ValueType]:
+def merge_sort_bottom_up(array: list[ValueType]) -> list[ValueType]:
     """
     An efficient bottom-up, divide-and-conquer algorithm.
 
@@ -214,7 +220,7 @@ def merge_sort_bottom_up(array: Sequence[ValueType]) -> list[ValueType]:
     return target
 
 
-def quicksort_lomuto(array: Sequence[ValueType]) -> list[ValueType]:
+def quicksort_lomuto(array: list[ValueType]) -> list[ValueType]:
     """
     Efficient divide-and-conquer algorithm, based on Lomuto partitioning scheme.
 
@@ -253,7 +259,7 @@ def quicksort_lomuto(array: Sequence[ValueType]) -> list[ValueType]:
     return array_output
 
 
-def quicksort_hoare(array: Sequence[ValueType]) -> list[ValueType]:
+def quicksort_hoare(array: list[ValueType]) -> list[ValueType]:
     """
     Efficient divide-and-conquer algorithm, based on Hoare partitioning scheme.
 
@@ -346,7 +352,7 @@ def _partition_and_return_pivot_index_hoare(array: list[ValueType], index_left: 
         _swap_elements(array, index_sub_left, index_sub_right)
 
 
-def selection_sort(array: Sequence[ValueType]) -> list[ValueType]:
+def selection_sort(array: list[ValueType]) -> list[ValueType]:
     """
     Simple algorithm constructing sorted array from smallest to largest element.
 
@@ -373,3 +379,8 @@ def selection_sort(array: Sequence[ValueType]) -> list[ValueType]:
         _swap_elements(array_output, size_sorted, index_min)
 
     return array_output
+
+
+def _swap_elements(array: list[ValueType], index_1: int, index_2: int) -> None:
+    if index_1 != index_2:
+        array[index_1], array[index_2] = array[index_2], array[index_1]

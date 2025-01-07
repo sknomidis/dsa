@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Sequence
-
 import numpy as np
 import pytest
 
@@ -45,7 +43,7 @@ from dsa.algorithms import sorting
     ],
     ids=lambda x: x.__name__,
 )
-def test_sorting(array_input: Sequence[int], sorting_algorithm: sorting.SortingAlgorithm) -> None:
+def test_sorting(array_input: list[int], sorting_algorithm: sorting.SortingAlgorithm) -> None:
     array_returned = sorting_algorithm(array_input)
     array_expected = sorted(array_input)
     assert array_returned == array_expected
