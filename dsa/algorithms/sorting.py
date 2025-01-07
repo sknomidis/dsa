@@ -22,12 +22,14 @@ def bubble_sort(array: list[ValueType]) -> list[ValueType]:
     Large elements bubble up towards the end of the array, hence the name of
     the algorithm.
 
-    Advantages:
+    Pros
+    ----------
     - Simple
     - Stable
     - Low memory
 
-    Disadvantages:
+    Cons
+    ----
     - Too slow for large input
 
     Complexity
@@ -47,15 +49,15 @@ def bubble_sort(array: list[ValueType]) -> list[ValueType]:
 def heap_sort(array: list[ValueType]) -> list[ValueType]:
     """Sorting based on the heap data structure.
 
-    Logic
-    -----
-    Construct a min heap, and iteratively extract smallest element.
+    Constructs a min heap, and iteratively extracts smallest element.
 
-    Advantages:
+    Pros
+    ----
     - Good worst-case performance
     - Low memory
 
-    Disadvantages:
+    Cons
+    ----
     - Not stable
     - Slower than merge sort
 
@@ -64,8 +66,7 @@ def heap_sort(array: list[ValueType]) -> list[ValueType]:
     Time:  O(N log N)
     Space: O(1)
     """
-    # TODO: Use custom heap implementation
-    # Construct heap
+    # Construct heap (TODO: Use custom implementation)
     heap = []
     for _ in range(len(array)):
         heapq.heappush(heap, array.pop())
@@ -74,83 +75,84 @@ def heap_sort(array: list[ValueType]) -> list[ValueType]:
 
 
 def insertion_sort(array: list[ValueType]) -> list[ValueType]:
-    """Simple sorting algorithm that builds sorted array one item at a time.
+    """Inserts elements one-by-one into their right position.
 
-    Logic
-    -----
-    It progressively constructs a sorted portion of the array, by iteratively
-    inserting each element into its right position.
+    Progressively constructs a sorted portion of the array, by iteratively
+    inserting each element into its right position. It is often used as a
+    fallback for nearly-sorted arrays.
+
+    Pros
+    ----
+    - Simple
+    - Stable
+    - Low memory
+    - Suitable for small input
+    - Very fast for nearly-sorted input
+    - Faster than most O(N**2) sorting algorithms
+
+    Cons
+    ----
+    - Poor worst-case performance
 
     Complexity
     ----------
     Time:  O(N**2)
     Space: O(1)
     """
-    array_output = list(array).copy()
-
     # Loop over all elements that need to be sorted one-by-one
-    for index_to_be_sorted in range(1, len(array_output)):
+    for index_to_be_sorted in range(1, len(array)):
         # Move element to the left, until it has been sorted
         for index in range(index_to_be_sorted, 0, -1):
-            if array_output[index - 1] <= array_output[index]:
+            if array[index - 1] > array[index]:
+                # Move element one step to the left
+                _swap_elements(array, index, index - 1)
+            else:
                 # Element has been sorted
                 break
-            # Move element to the left
-            _swap_elements(array_output, index, index - 1)
-
-    return array_output
+    return array
 
 
 def merge_sort_top_down(array: list[ValueType]) -> list[ValueType]:
-    """
-    An efficient top-down, divide-and-conquer algorithm.
+    """An efficient top-down, divide-and-conquer algorithm.
 
-    Logic
-    -----
     Recursively divide input into subarrays, sort them, and merge them back.
     Requires a single buffer array, which gets efficiently copied.
 
+    Pros
+    ----
+    + Stable
+    + Guaranteed O(N log N) complexity
+
+    Cons
+    ----
+    - Not cache friendly
+    - High memory
+
     Complexity
     ----------
-    Time: O(N log N)
-    Space: O(N log N)
-
-    Comparison
-    ----------
-    + Stable
-    + Same worst- and average-case complexity
-    - Not cache friendly
-    - More memory
-
-    Notes
-    -----
-    To derive the time complexity, you write the total processing time as
-
-    T(N) = 2T(N/2) + M(N),
-
-    where M(N) is the time it takes to merge N elements. Using this equation
-    recursively, and considering that the total number of recursions is log2 N,
-    and that M(N) ~ N, we end up with T(N) ~ N log2 N
+    Time:  O(N log N)
+    Space: O(N)
     """
-    source = list(array).copy()
+    source = array
     target = source.copy()
-    _divide_sort_and_merge(source, target, index_left=0, index_right=len(source))
+
+    def mergesort(source: list[ValueType], target: list[ValueType], index_left: int, index_right: int) -> None:
+        if index_right - index_left <= 1:
+            # No more splitting possible
+            return
+
+        # Split in half
+        index_middle = (index_left + index_right) // 2
+        # Recursively sort the two halves. Notice how source and target are swapped.
+        # This is an optimization: At each merge, the target contains the sorted
+        # subarray, which is then used as the source in the next recursion. This
+        # back-and-forth merging avoids unnecessary copying.
+        mergesort(target, source, index_left, index_middle)
+        mergesort(target, source, index_middle, index_right)
+        _sort_and_merge(source, target, index_left, index_middle, index_right)
+
+    mergesort(source, target, index_left=0, index_right=len(target))
     return target
-
-
-def _divide_sort_and_merge(source: list[ValueType], target: list[ValueType], index_left: int, index_right: int) -> None:
-    if index_right - index_left <= 1:
-        # No more splitting possible
-        return
-    # Split in half
-    index_middle = (index_left + index_right) // 2
-    # Recursively sort the two halves. Notice how source and target are swapped.
-    # This is an optimization: At each merge, the target contains the sorted
-    # subarray, which is then used as the source in the next recursion. This
-    # back-and-forth merging avoids unnecessary copying.
-    _divide_sort_and_merge(target, source, index_left, index_middle)
-    _divide_sort_and_merge(target, source, index_middle, index_right)
-    _sort_and_merge(source, target, index_left, index_middle, index_right)
 
 
 def _sort_and_merge(
@@ -163,8 +165,8 @@ def _sort_and_merge(
     for index_target in range(index_left, index_right):
         is_left_empty = index_sub_left == index_middle
         is_right_empty = index_sub_right == index_right
-        should_merge_from_left = (not is_left_empty) and (
-            is_right_empty or source[index_sub_left] <= source[index_sub_right]  # The equality makes it stable
+        should_merge_from_left = is_right_empty or (
+            not is_left_empty or source[index_sub_left] <= source[index_sub_right]  # The equality makes it stable
         )
 
         if should_merge_from_left:
@@ -176,28 +178,13 @@ def _sort_and_merge(
 
 
 def merge_sort_bottom_up(array: list[ValueType]) -> list[ValueType]:
-    """
-    An efficient bottom-up, divide-and-conquer algorithm.
+    """An efficient bottom-up, divide-and-conquer algorithm.
 
-    Logic
-    -----
     Similar to the top-down approach, but without recursion for the division
     step. Instead, it already considers the source array divided into single-
     element arrays, and only performs the merge.
-
-    Complexity
-    ----------
-    Time: O(N log N)
-    Space: O(N)
-
-    Comparison
-    ----------
-    + Stable
-    + Same worst- and average-case complexity
-    - Not cache friendly
-    - More memory
     """
-    source = list(array).copy()
+    source = array
     target = source.copy()
     total_size = len(target)
 
@@ -221,8 +208,7 @@ def merge_sort_bottom_up(array: list[ValueType]) -> list[ValueType]:
 
 
 def quicksort_lomuto(array: list[ValueType]) -> list[ValueType]:
-    """
-    Efficient divide-and-conquer algorithm, based on Lomuto partitioning scheme.
+    """Efficient divide-and-conquer algorithm, based on Lomuto partitioning scheme.
 
     Logic
     -----
@@ -382,5 +368,6 @@ def selection_sort(array: list[ValueType]) -> list[ValueType]:
 
 
 def _swap_elements(array: list[ValueType], index_1: int, index_2: int) -> None:
+    """Helper function to swap array elements in place."""
     if index_1 != index_2:
         array[index_1], array[index_2] = array[index_2], array[index_1]
