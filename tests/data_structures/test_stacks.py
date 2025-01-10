@@ -10,10 +10,7 @@ from dsa.data_structures import stacks
 @pytest.mark.parametrize("elements", [[0], [1, 2], [1, 2, 4], [1, 2, 4, 8]], ids=lambda s: f"size-{len(s)}")
 @pytest.mark.parametrize(
     "stack_type",
-    [
-        stacks.ArrayStack,
-        stacks.ListStack,
-    ],
+    [stacks.ArrayStack, stacks.ListStack],
     ids=lambda c: c.__name__,
 )
 def test_stack(elements: Sequence[int], stack_type: type[stacks.Stack]) -> None:

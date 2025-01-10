@@ -2,49 +2,85 @@ from __future__ import annotations
 
 import abc
 import dataclasses
-from typing import Any
+from typing import TypeVar
+
+ValueType = TypeVar("ValueType")
 
 
 class Stack(abc.ABC):
-    @abc.abstractmethod
-    def push(self, element: Any) -> None: ...
+    """Fundamental LIFO data structure."""
 
     @abc.abstractmethod
-    def pop(self) -> Any: ...
+    def push(self, element: ValueType) -> None:
+        """Insert value to the top of stack."""
+
+    @abc.abstractmethod
+    def pop(self) -> ValueType:
+        """Pop value from the top of stack."""
 
 
 class ArrayStack(Stack):
-    def __init__(self, max_size: int = 20) -> None:
-        assert max_size > 0
-        self._array = max_size * [None]
-        self._index = 0
+    """Stack with underlying array implementation.
 
-    def push(self, element: Any) -> None:
-        self._array[self._index] = element
-        self._index += 1
+    Pros
+    ----
+    - Cache friendly (contiguous storage)
 
-    def pop(self) -> Any:
-        assert self._index > 0
-        self._index -= 1
-        return self._array[self._index]
+    Cons
+    ----
+    - Unused memory
+    - Resizing is expensive
+    - All values need to be of the same type
+    """
+
+    def __init__(self, size_max: int = 20) -> None:
+        assert size_max > 0
+        self._array = size_max * [None]
+        self._index_top = 0
+
+    def push(self, element: ValueType) -> None:
+        # O(1)
+        assert self._index_top < len(self._array), "Max stack size exceeded"
+        self._array[self._index_top] = element
+        self._index_top += 1
+
+    def pop(self) -> ValueType:
+        # O(1)
+        assert self._index_top > 0
+        self._index_top -= 1
+        return self._array[self._index_top]
 
 
 class ListStack(Stack):
+    """Stack with underlying singly-linked list implementation.
+
+    Pros
+    ----
+    - Memory efficient
+    - Cheap resizing
+    - Values do not have to be of same type
+
+    Cons
+    ----
+    - Not cache friendly
+    """
+
     def __init__(self) -> None:
-        self._node_last: _Node | None = None
+        self._node_top: _Node | None = None
 
-    def push(self, element: Any) -> None:
-        node_last = self._node_last
-        self._node_last = _Node(element, next=node_last)
+    def push(self, element: ValueType) -> None:
+        # O(1)
+        self._node_top = _Node(element, tail=self._node_top)
 
-    def pop(self) -> Any:
-        assert self._node_last is not None
-        node_popped = self._node_last
-        self._node_last = node_popped.next
+    def pop(self) -> ValueType:
+        # O(1)
+        assert self._node_top is not None
+        node_popped = self._node_top
+        self._node_top = node_popped.tail
         return node_popped.value
 
 
 @dataclasses.dataclass(frozen=True)
 class _Node:
-    value: Any
-    next: _Node | None
+    value: ValueType
+    tail: _Node | None
