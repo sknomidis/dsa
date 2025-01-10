@@ -33,8 +33,8 @@ class ArrayQueue(Queue):
     - All values need to be of the same type
     """
 
-    def __init__(self, max_size: int = 4) -> None:
-        self._array = max_size * [None]
+    def __init__(self, size_max: int = 4) -> None:
+        self._array = size_max * [None]
         self._index_tail = 0
         self._size = 0
 
