@@ -2,62 +2,35 @@ from __future__ import annotations
 
 import collections
 import dataclasses
-from typing import Any, Iterator, Literal, Self
+from typing import Iterator, Literal, Self, TypeVar
 
-
-@dataclasses.dataclass()
-class _BinaryNode:
-    value: Any
-    child_left: Self | None = None
-    child_right: Self | None = None
-
-    @property
-    def balance(self) -> int:
-        height_left = self.child_left.height if self.child_left is not None else 0
-        height_right = self.child_right.height if self.child_right is not None else 0
-        return height_left - height_right
-
-    @property
-    def height(self) -> int:
-        height_left = self.child_left.height if self.child_left is not None else 0
-        height_right = self.child_right.height if self.child_right is not None else 0
-        return 1 + max(height_left, height_right)
-
-    @property
-    def num_children(self) -> int:
-        return 2 - [self.child_left, self.child_right].count(None)
+ValueType = TypeVar("ValueType")
 
 
 class BinaryTree:
-    def __init__(self, root: _BinaryNode | None = None) -> None:
-        self._root = root
+    """Hierarchical data structure with each node having at most two children.
+
+    It is mainly used for efficient data storage and retrieval.
+    """
+
+    def __init__(self) -> None:
+        self._root: _BinaryNode | None = None
 
     def is_balanced(self) -> bool:
         """Height difference between all left and right subtrees is at most 1."""
-
-        def is_subtree_balanced(root: _BinaryNode) -> bool:
-            if root is None:
-                return True
-            height_left = root.child_left.height if root.child_left is not None else 0
-            height_right = root.child_right.height if root.child_right is not None else 0
-            skew = abs(height_left - height_right)
-            return skew <= 1 and is_subtree_balanced(root.child_left) and is_subtree_balanced(root.child_right)
-
-        return is_subtree_balanced(self._root)
+        return all(abs(node.balance) <= 1 for node in self._traversal_BFS())
 
     def is_complete(self) -> bool:
         """All intermediate levels are filled and all leaf nodes are on the left."""
         nonfull_node_has_been_found = False
         for node in self._traversal_BFS():
-            n_children = node.num_children
             if nonfull_node_has_been_found:
                 # All subsequent children must be leaf nodes
-                if n_children > 0:
+                if node.num_children > 0:
                     return False
-                continue
-            if n_children < 2:
+            elif node.num_children < 2:
                 nonfull_node_has_been_found = True
-                if n_children == 1 and node.child_right is not None:
+                if node.num_children == 1 and node.child_right is not None:
                     return False
         return True
 
@@ -65,19 +38,11 @@ class BinaryTree:
         """Each node has 1 child."""
         if self._root is None or self._root.num_children != 1:
             return False
-        for node in self._traversal_BFS():
-            if node.num_children > 1:
-                return False
-        return True
+        return all(node.num_children < 2 for node in self._traversal_BFS())
 
     def is_full(self) -> bool:
         """Each node has either 0 or 2 children."""
-        if self._root is None:
-            return True
-        for node in self._traversal_BFS():
-            if node.num_children == 1:
-                return False
-        return True
+        return all(node.num_children % 2 == 0 for node in self._traversal_BFS())
 
     def is_perfect(self) -> bool:
         """Internal nodes have 2 children, and leaf nodes are on same level."""
@@ -97,7 +62,7 @@ class BinaryTree:
         height_total = self._root.height if self._root is not None else 0
         return is_subtree_perfect(self._root, height_total)
 
-    def insert(self, value: Any) -> None:
+    def insert(self, value: ValueType) -> None:
         """Breadth-First Search tree insertion (level order).
 
         Complexity
@@ -118,7 +83,7 @@ class BinaryTree:
                 return
         raise AssertionError
 
-    def traversal_BFS(self) -> Iterator[Any]:
+    def traversal_BFS(self) -> Iterator[ValueType]:
         """Breadth-First Search tree traversal (level order).
 
         Applications
@@ -145,7 +110,7 @@ class BinaryTree:
                 queue_children.append(node.child_right)
             yield node
 
-    def traversal_DFS(self, variant: Literal["preorder", "inorder", "postorder"]) -> Iterator[Any]:
+    def traversal_DFS(self, variant: Literal["preorder", "inorder", "postorder"]) -> Iterator[ValueType]:
         """Depth-First Search tree traversal.
 
         It comes in the following flavors:
@@ -221,3 +186,26 @@ class BinaryTree:
         yield from cls._postorder(root.child_left)
         yield from cls._postorder(root.child_right)
         yield root
+
+
+@dataclasses.dataclass()
+class _BinaryNode:
+    value: ValueType
+    child_left: Self | None = None
+    child_right: Self | None = None
+
+    @property
+    def balance(self) -> int:
+        height_left = self.child_left.height if self.child_left is not None else 0
+        height_right = self.child_right.height if self.child_right is not None else 0
+        return height_left - height_right
+
+    @property
+    def height(self) -> int:
+        height_left = self.child_left.height if self.child_left is not None else 0
+        height_right = self.child_right.height if self.child_right is not None else 0
+        return 1 + max(height_left, height_right)
+
+    @property
+    def num_children(self) -> int:
+        return 2 - [self.child_left, self.child_right].count(None)

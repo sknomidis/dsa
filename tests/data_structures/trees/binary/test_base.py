@@ -15,34 +15,36 @@ def binary_tree() -> trees.BinaryTree:
     # 4   3 6
     #    /
     #   0
+    tree = trees.BinaryTree()
     root = _BinaryNode(2)
+    tree._root = root
     root.child_left = _BinaryNode(1)
     root.child_left.child_left = _BinaryNode(4)
     root.child_left.child_right = _BinaryNode(3)
     root.child_left.child_right.child_left = _BinaryNode(0)
     root.child_right = _BinaryNode(10)
     root.child_right.child_left = _BinaryNode(6)
-    return trees.BinaryTree(root)
+    return tree
 
 
 def test_binary_tree_is_balanced() -> None:
-    binary_tree = trees.BinaryTree()
-    assert binary_tree.is_balanced()
+    tree = trees.BinaryTree()
+    assert tree.is_balanced()
     root = _BinaryNode(0)
-    binary_tree._root = root
-    assert binary_tree.is_balanced()
+    tree._root = root
+    assert tree.is_balanced()
     root.child_left = _BinaryNode(1)
-    assert binary_tree.is_balanced()
+    assert tree.is_balanced()
     root.child_left.child_left = _BinaryNode(2)
-    assert not binary_tree.is_balanced()
+    assert not tree.is_balanced()
     root.child_right = _BinaryNode(3)
-    assert binary_tree.is_balanced()
+    assert tree.is_balanced()
     root.child_left.child_right = _BinaryNode(4)
-    assert binary_tree.is_balanced()
+    assert tree.is_balanced()
     root.child_left.child_right.child_left = _BinaryNode(5)
-    assert not binary_tree.is_balanced()
+    assert not tree.is_balanced()
     root.child_right.child_right = _BinaryNode(6)
-    assert binary_tree.is_balanced()
+    assert tree.is_balanced()
 
 
 def test_binary_tree_is_complete() -> None:
