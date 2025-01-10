@@ -12,15 +12,15 @@ class Queue(abc.ABC):
 
     @abc.abstractmethod
     def enqueue(self, value: ValueType) -> None:
-        """Place value at the back of queue."""
+        """Insert value to the back of queue."""
 
     @abc.abstractmethod
     def dequeue(self) -> ValueType:
-        """Pop value in front of queue."""
+        """Pop value from front of queue."""
 
 
 class ArrayQueue(Queue):
-    """Queue data structure with an array implementation.
+    """Queue with underlying array implementation.
 
     Pros
     ----
@@ -35,37 +35,38 @@ class ArrayQueue(Queue):
 
     def __init__(self, max_size: int = 4) -> None:
         self._array = max_size * [None]
-        self._index = 0
+        self._index_tail = 0
         self._size = 0
 
     @property
-    def max_size(self) -> int:
+    def size_max(self) -> int:
         return len(self._array)
 
     def enqueue(self, value: ValueType) -> None:
         # O(1)
-        assert self._size < self.max_size
-        index_last = self._index % self.max_size
-        self._array[index_last] = value
-        self._index = (self._index + 1) % self.max_size
+        assert self._size < self.size_max, "Max queue size exceeded"
+        index_tail = self._index_tail % self.size_max
+        self._array[index_tail] = value
+        self._index_tail = (self._index_tail + 1) % self.size_max
         self._size += 1
 
     def dequeue(self) -> ValueType:
         # O(1)
         assert self._size > 0
-        index_first = (self._index - self._size + self.max_size) % self.max_size
-        value = self._array[index_first]
-        self._array[index_first] = None
+        index_head = (self._index_tail - self._size + self.size_max) % self.size_max
+        value = self._array[index_head]
+        self._array[index_head] = None
         self._size -= 1
         return value
 
 
 class ListQueue(Queue):
-    """Queue data structure with a doubly-linked list implementation.
+    """Queue with underlying doubly-linked list implementation.
 
     Pros
     ----
     - Memory efficient
+    - Cheap resizing
     - Values do not have to be of same type
 
     Cons
@@ -79,7 +80,7 @@ class ListQueue(Queue):
 
     @property
     def empty(self) -> bool:
-        if None in [self._head, self._tail]:
+        if self._head is None or self._tail is None:
             assert self._head is self._tail is None
             return True
         return False
@@ -92,17 +93,17 @@ class ListQueue(Queue):
             self._head = node_enqueued
         else:
             # Re-arrange node connections
-            node_enqueued.tail = self._tail
-            self._tail.head = node_enqueued
+            node_enqueued.head = self._tail
+            self._tail.tail = node_enqueued
         self._tail = node_enqueued
 
     def dequeue(self) -> ValueType:
         # O(1)
         assert not self.empty
         node_dequeued = self._head
-        self._head = node_dequeued.head
+        self._head = node_dequeued.tail
         if self._head is not None:
-            self._head.tail = None
+            self._head.head = None
         else:
             # List is now empty
             self._tail = None
