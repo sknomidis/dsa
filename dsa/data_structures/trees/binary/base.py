@@ -6,7 +6,7 @@ from typing import Any, Iterator, Literal, Self
 
 
 @dataclasses.dataclass()
-class BinaryNode:
+class _BinaryNode:
     value: Any
     child_left: Self | None = None
     child_right: Self | None = None
@@ -24,18 +24,18 @@ class BinaryNode:
         return 1 + max(height_left, height_right)
 
     @property
-    def n_children(self) -> int:
+    def num_children(self) -> int:
         return 2 - [self.child_left, self.child_right].count(None)
 
 
 class BinaryTree:
-    def __init__(self, root: BinaryNode | None = None) -> None:
+    def __init__(self, root: _BinaryNode | None = None) -> None:
         self._root = root
 
     def is_balanced(self) -> bool:
         """Height difference between all left and right subtrees is at most 1."""
 
-        def is_subtree_balanced(root: BinaryNode) -> bool:
+        def is_subtree_balanced(root: _BinaryNode) -> bool:
             if root is None:
                 return True
             height_left = root.child_left.height if root.child_left is not None else 0
@@ -49,7 +49,7 @@ class BinaryTree:
         """All intermediate levels are filled and all leaf nodes are on the left."""
         nonfull_node_has_been_found = False
         for node in self._traversal_BFS():
-            n_children = node.n_children
+            n_children = node.num_children
             if nonfull_node_has_been_found:
                 # All subsequent children must be leaf nodes
                 if n_children > 0:
@@ -63,10 +63,10 @@ class BinaryTree:
 
     def is_degenerate(self) -> bool:
         """Each node has 1 child."""
-        if self._root is None or self._root.n_children != 1:
+        if self._root is None or self._root.num_children != 1:
             return False
         for node in self._traversal_BFS():
-            if node.n_children > 1:
+            if node.num_children > 1:
                 return False
         return True
 
@@ -75,19 +75,19 @@ class BinaryTree:
         if self._root is None:
             return True
         for node in self._traversal_BFS():
-            if node.n_children == 1:
+            if node.num_children == 1:
                 return False
         return True
 
     def is_perfect(self) -> bool:
         """Internal nodes have 2 children, and leaf nodes are on same level."""
 
-        def is_subtree_perfect(root: BinaryNode, height: int) -> bool:
+        def is_subtree_perfect(root: _BinaryNode, height: int) -> bool:
             if root is None:
                 return True
-            if root.n_children == 1:
+            if root.num_children == 1:
                 return False
-            if root.n_children == 0:
+            if root.num_children == 0:
                 # Leaf nodes can only exist at last level
                 return height == 1
             is_subtree_perfect_left = is_subtree_perfect(root.child_left, height - 1)
@@ -105,7 +105,7 @@ class BinaryTree:
         Time: O(N)
         Space: O(N)
         """
-        node_inserted = BinaryNode(value)
+        node_inserted = _BinaryNode(value)
         if self._root is None:
             self._root = node_inserted
             return
@@ -133,7 +133,7 @@ class BinaryTree:
         for node in self._traversal_BFS():
             yield node.value
 
-    def _traversal_BFS(self) -> Iterator[BinaryNode]:
+    def _traversal_BFS(self) -> Iterator[_BinaryNode]:
         if self._root is None:
             return
         queue_children = collections.deque([self._root])
@@ -176,7 +176,7 @@ class BinaryTree:
             yield node.value
 
     @classmethod
-    def _preorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
+    def _preorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
         """root-left-right traversal policy.
 
         Topologically sorted, since parents are processed before their children.
@@ -192,7 +192,7 @@ class BinaryTree:
         yield from cls._preorder(root.child_right)
 
     @classmethod
-    def _inorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
+    def _inorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
         """left-root-right traversal policy.
 
         Applications:
@@ -207,7 +207,7 @@ class BinaryTree:
         yield from cls._inorder(root.child_right)
 
     @classmethod
-    def _postorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
+    def _postorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
         """left-right-root traversal policy.
 
         Applications:

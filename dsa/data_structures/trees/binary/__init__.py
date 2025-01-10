@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from .base import BinaryNode, BinaryTree
+from .base import BinaryTree

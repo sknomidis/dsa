@@ -1,4 +1,4 @@
 from __future__ import annotations
 
-from .binary import BinaryNode, BinaryTree
+from .binary import BinaryTree
 from .trie import TrieTree
