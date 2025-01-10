@@ -19,12 +19,12 @@ class TrieTree:
     Pros
     ----
     - Faster than hash tables and BSTs
-    - Allow sorting
+    - Allows sorting
     - Efficient prefix matching
 
     Cons
     ----
-    - Require a lot of memory
+    - Requires a lot of memory
     - Lookup is faster in an optimized hash table: O(1)
     """
 
@@ -54,15 +54,14 @@ class TrieTree:
                 yield from preorder(child, prefix)
 
         for _, word in preorder(self._root):
-            if word:
-                yield word
+            yield word
 
     def insert(self, word: str) -> None:
         """Insert a new word to the dictionary.
 
         Complexity
         ----------
-        Time: O(N), where N is the word length
+        Time: O(word_size)
         Space: O(1)
         """
         assert word
@@ -78,7 +77,7 @@ class TrieTree:
 
         Complexity
         ----------
-        Time: O(N), where N is the word length
+        Time: O(word_size)
         Space: O(1)
         """
         assert word
@@ -94,7 +93,7 @@ class TrieTree:
 
         Complexity
         ----------
-        Time: O(N), where N is the word length
+        Time: O(word_size)
         Space: O(1)
         """
         assert word
@@ -126,9 +125,9 @@ class TrieTree:
 
 
 class _TrieNode:
-    """Node of a Trie tree.
+    """Trie tree node.
 
-    It holds a single character as its key, and may have multiple children.
+    Its key is a single character, and may have multiple children.
     """
 
     def __init__(self, character: str, alphabet_size: int, first_character: str) -> None:
