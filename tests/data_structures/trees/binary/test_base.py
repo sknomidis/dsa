@@ -26,6 +26,26 @@ def binary_tree() -> trees.BinaryTree:
     return tree
 
 
+@pytest.fixture()
+def binary_search_tree() -> trees.BinarySearchTree:
+    #     42
+    #    /   \
+    #   23   60
+    #  / \   /
+    # 4  33 56
+    #    /
+    #   28
+    tree = trees.BinarySearchTree()
+    tree._root = BinaryNode(42)
+    tree._root.child_left = BinaryNode(23)
+    tree._root.child_left.child_left = BinaryNode(4)
+    tree._root.child_left.child_right = BinaryNode(33)
+    tree._root.child_left.child_right.child_left = BinaryNode(28)
+    tree._root.child_right = BinaryNode(60)
+    tree._root.child_right.child_left = BinaryNode(56)
+    return tree
+
+
 def test_binary_tree_is_balanced() -> None:
     tree = trees.BinaryTree()
     assert tree.is_balanced()
@@ -161,3 +181,86 @@ def test_binary_tree_traversal_BFS(binary_tree: trees.BinaryTree) -> None:
 def test_binary_tree_traversal_preorder_DFS(variant: str, expected: list[int], binary_tree: trees.BinaryTree) -> None:
     traversed = list(binary_tree.traversal_DFS(variant))
     assert traversed == expected
+
+
+def test_binary_search_tree_consistency() -> None:
+    elements = [42, 43, 10, 11, 8]
+    elements_iter = iter(elements)
+    binary_tree = trees.BinarySearchTree()
+    binary_tree.assert_consistent()
+    root = BinaryNode(next(elements_iter))
+    binary_tree._root = root
+    binary_tree.assert_consistent()
+    root.child_right = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left.child_right = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left.child_left = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    assert list(binary_tree.traversal_DFS("inorder")) == sorted(elements)
+
+    root.child_left.child_right.child_left = BinaryNode(12)
+    with pytest.raises(AssertionError):
+        binary_tree.assert_consistent()
+
+
+def test_binary_search_tree_min(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_min() == 4
+    for value in range(5, 10):
+        binary_search_tree.insert(value)
+        assert binary_search_tree.find_min() == 4
+    binary_search_tree.insert(2)
+    assert binary_search_tree.find_min() == 2
+
+
+def test_binary_search_tree_max(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_max() == 60
+    for value in range(57, 60):
+        binary_search_tree.insert(value)
+        assert binary_search_tree.find_max() == 60
+    binary_search_tree.insert(240)
+    assert binary_search_tree.find_max() == 240
+
+
+def test_binary_search_tree_floor(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_floor(43) == 42
+    assert binary_search_tree.find_floor(32) == 23
+    assert binary_search_tree.find_floor(12) == 4
+    assert binary_search_tree.find_floor(60) == 60
+    assert binary_search_tree.find_floor(2) is None
+
+
+def test_binary_search_tree_ceil(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_ceil(40) == 42
+    assert binary_search_tree.find_ceil(16) == 23
+    assert binary_search_tree.find_ceil(1) == 4
+    assert binary_search_tree.find_ceil(60) == 60
+    assert binary_search_tree.find_ceil(62) is None
+
+
+def test_binary_search_tree_insert(binary_search_tree: trees.BinarySearchTree) -> None:
+    binary_search_tree.assert_consistent()
+    assert not binary_search_tree.is_full()
+    for value in [35, 2, 65, 6]:
+        assert not binary_search_tree.search(value)
+        binary_search_tree.insert(value)
+        assert binary_search_tree.search(value)
+        binary_search_tree.assert_consistent()
+    assert binary_search_tree.is_full()
+    with pytest.raises(AssertionError):
+        binary_search_tree.insert(35)
+
+
+def test_binary_search_tree_delete(binary_search_tree: trees.BinarySearchTree) -> None:
+    for value in [28, 42, 4, 23]:
+        assert binary_search_tree.search(value)
+        binary_search_tree.delete(value)
+        assert not binary_search_tree.search(value)
+        binary_search_tree.assert_consistent()
+    assert list(binary_search_tree.traversal_DFS("inorder")) == [33, 56, 60]
+
+    assert not binary_search_tree.search(200)
+    binary_search_tree.delete(200)
+    assert not binary_search_tree.search(200)
