@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from .base import BinaryTree
+from .base import BinarySearchTree, BinaryTree

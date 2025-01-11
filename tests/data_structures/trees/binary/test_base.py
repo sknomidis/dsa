@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from dsa.data_structures import trees
-from dsa.data_structures.trees.binary.base import _BinaryNode
+from dsa.data_structures.trees.binary.base import BinaryNode
 
 
 @pytest.fixture()
@@ -16,70 +16,89 @@ def binary_tree() -> trees.BinaryTree:
     #    /
     #   0
     tree = trees.BinaryTree()
-    root = _BinaryNode(2)
-    tree._root = root
-    root.child_left = _BinaryNode(1)
-    root.child_left.child_left = _BinaryNode(4)
-    root.child_left.child_right = _BinaryNode(3)
-    root.child_left.child_right.child_left = _BinaryNode(0)
-    root.child_right = _BinaryNode(10)
-    root.child_right.child_left = _BinaryNode(6)
+    tree._root = BinaryNode(2)
+    tree._root.child_left = BinaryNode(1)
+    tree._root.child_left.child_left = BinaryNode(4)
+    tree._root.child_left.child_right = BinaryNode(3)
+    tree._root.child_left.child_right.child_left = BinaryNode(0)
+    tree._root.child_right = BinaryNode(10)
+    tree._root.child_right.child_left = BinaryNode(6)
+    return tree
+
+
+@pytest.fixture()
+def binary_search_tree() -> trees.BinarySearchTree:
+    #     42
+    #    /   \
+    #   23   60
+    #  / \   /
+    # 4  33 56
+    #    /
+    #   28
+    tree = trees.BinarySearchTree()
+    tree._root = BinaryNode(42)
+    tree._root.child_left = BinaryNode(23)
+    tree._root.child_left.child_left = BinaryNode(4)
+    tree._root.child_left.child_right = BinaryNode(33)
+    tree._root.child_left.child_right.child_left = BinaryNode(28)
+    tree._root.child_right = BinaryNode(60)
+    tree._root.child_right.child_left = BinaryNode(56)
     return tree
 
 
 def test_binary_tree_is_balanced() -> None:
     tree = trees.BinaryTree()
     assert tree.is_balanced()
-    root = _BinaryNode(0)
+    root = BinaryNode(0)
     tree._root = root
     assert tree.is_balanced()
-    root.child_left = _BinaryNode(1)
+    root.child_left = BinaryNode(1)
     assert tree.is_balanced()
-    root.child_left.child_left = _BinaryNode(2)
+    root.child_left.child_left = BinaryNode(2)
     assert not tree.is_balanced()
-    root.child_right = _BinaryNode(3)
+    root.child_right = BinaryNode(3)
     assert tree.is_balanced()
-    root.child_left.child_right = _BinaryNode(4)
+    root.child_left.child_right = BinaryNode(4)
     assert tree.is_balanced()
-    root.child_left.child_right.child_left = _BinaryNode(5)
+    root.child_left.child_right.child_left = BinaryNode(5)
     assert not tree.is_balanced()
-    root.child_right.child_right = _BinaryNode(6)
+    root.child_right.child_right = BinaryNode(6)
     assert tree.is_balanced()
 
 
 def test_binary_tree_is_complete() -> None:
     binary_tree = trees.BinaryTree()
     assert binary_tree.is_complete()
-    root = _BinaryNode(0)
+    root = BinaryNode(0)
     binary_tree._root = root
     assert binary_tree.is_complete()
-    binary_tree._root.child_right = _BinaryNode(2)
+    binary_tree._root.child_right = BinaryNode(2)
     assert not binary_tree.is_complete()
-    binary_tree._root.child_left = _BinaryNode(1)
+    binary_tree._root.child_left = BinaryNode(1)
     assert binary_tree.is_complete()
-    binary_tree._root.child_left.child_left = _BinaryNode(3)
+    binary_tree._root.child_left.child_left = BinaryNode(3)
     assert binary_tree.is_complete()
-    binary_tree._root.child_right.child_left = _BinaryNode(5)
+    binary_tree._root.child_right.child_left = BinaryNode(5)
     assert not binary_tree.is_complete()
-    binary_tree._root.child_left.child_right = _BinaryNode(4)
+    binary_tree._root.child_left.child_right = BinaryNode(4)
     assert binary_tree.is_complete()
-    binary_tree._root.child_left.child_left.child_right = _BinaryNode(5)
+    binary_tree._root.child_left.child_left.child_right = BinaryNode(5)
     assert not binary_tree.is_complete()
 
 
 def test_binary_tree_is_degenerate() -> None:
     binary_tree = trees.BinaryTree()
     assert not binary_tree.is_degenerate()
-    root = _BinaryNode(0)
+    root = BinaryNode(0)
     binary_tree._root = root
     assert not binary_tree.is_degenerate()
-    root.child_left = _BinaryNode(1)
+    root.child_left = BinaryNode(1)
     assert binary_tree.is_degenerate()
-    root.child_left.child_right = _BinaryNode(2)
+    root.child_left.child_right = BinaryNode(2)
     assert binary_tree.is_degenerate()
-    root.child_left.child_right.child_left = _BinaryNode(3)
+    root.child_left.child_right.child_left = BinaryNode(3)
     assert binary_tree.is_degenerate()
-    root.child_left.child_right.child_right = _BinaryNode(4)
+    root.child_left.child_right.child_right = BinaryNode(4)
     assert not binary_tree.is_degenerate()
 
 
@@ -96,20 +115,20 @@ def test_binary_tree_is_full() -> None:
 def test_binary_tree_is_perfect() -> None:
     binary_tree = trees.BinaryTree()
     assert binary_tree.is_perfect()
-    root = _BinaryNode(0)
+    root = BinaryNode(0)
     binary_tree._root = root
     assert binary_tree.is_perfect()
-    root.child_left = _BinaryNode(1)
+    root.child_left = BinaryNode(1)
     assert not binary_tree.is_perfect()
-    root.child_right = _BinaryNode(2)
+    root.child_right = BinaryNode(2)
     assert binary_tree.is_perfect()
-    root.child_left.child_left = _BinaryNode(3)
+    root.child_left.child_left = BinaryNode(3)
     assert not binary_tree.is_perfect()
-    root.child_left.child_right = _BinaryNode(4)
+    root.child_left.child_right = BinaryNode(4)
     assert not binary_tree.is_perfect()
-    root.child_right.child_left = _BinaryNode(5)
+    root.child_right.child_left = BinaryNode(5)
     assert not binary_tree.is_perfect()
-    root.child_right.child_right = _BinaryNode(6)
+    root.child_right.child_right = BinaryNode(6)
     assert binary_tree.is_perfect()
 
 
@@ -162,3 +181,84 @@ def test_binary_tree_traversal_BFS(binary_tree: trees.BinaryTree) -> None:
 def test_binary_tree_traversal_preorder_DFS(variant: str, expected: list[int], binary_tree: trees.BinaryTree) -> None:
     traversed = list(binary_tree.traversal_DFS(variant))
     assert traversed == expected
+
+
+def test_binary_search_tree_consistency() -> None:
+    elements = [42, 43, 10, 11, 8]
+    elements_iter = iter(elements)
+    binary_tree = trees.BinarySearchTree()
+    binary_tree.assert_consistent()
+    root = BinaryNode(next(elements_iter))
+    binary_tree._root = root
+    binary_tree.assert_consistent()
+    root.child_right = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left.child_right = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    root.child_left.child_left = BinaryNode(next(elements_iter))
+    binary_tree.assert_consistent()
+    assert list(binary_tree.traversal_DFS("inorder")) == sorted(elements)
+
+    root.child_left.child_right.child_left = BinaryNode(12)
+    with pytest.raises(AssertionError):
+        binary_tree.assert_consistent()
+
+
+def test_binary_search_tree_min(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_min() == 4
+    for value in range(5, 10):
+        binary_search_tree.insert(value)
+        assert binary_search_tree.find_min() == 4
+    binary_search_tree.insert(2)
+    assert binary_search_tree.find_min() == 2
+
+
+def test_binary_search_tree_max(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_max() == 60
+    for value in range(57, 60):
+        binary_search_tree.insert(value)
+        assert binary_search_tree.find_max() == 60
+    binary_search_tree.insert(240)
+    assert binary_search_tree.find_max() == 240
+
+
+def test_binary_search_tree_floor(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_floor(43) == 42
+    assert binary_search_tree.find_floor(32) == 23
+    assert binary_search_tree.find_floor(12) == 4
+    assert binary_search_tree.find_floor(60) == 60
+    assert binary_search_tree.find_floor(2) is None
+
+
+def test_binary_search_tree_ceil(binary_search_tree: trees.BinarySearchTree) -> None:
+    assert binary_search_tree.find_ceil(40) == 42
+    assert binary_search_tree.find_ceil(16) == 23
+    assert binary_search_tree.find_ceil(1) == 4
+    assert binary_search_tree.find_ceil(60) == 60
+    assert binary_search_tree.find_ceil(62) is None
+
+
+def test_binary_search_tree_insert(binary_search_tree: trees.BinarySearchTree) -> None:
+    binary_search_tree.assert_consistent()
+    assert not binary_search_tree.is_full()
+    for value in [35, 2, 65, 6]:
+        assert not binary_search_tree.search(value)
+        binary_search_tree.insert(value)
+        assert binary_search_tree.search(value)
+        binary_search_tree.assert_consistent()
+    assert binary_search_tree.is_full()
+
+
+def test_binary_search_tree_delete(binary_search_tree: trees.BinarySearchTree) -> None:
+    for value in [28, 42, 4, 23]:
+        assert binary_search_tree.search(value)
+        binary_search_tree.delete(value)
+        assert not binary_search_tree.search(value)
+        binary_search_tree.assert_consistent()
+    assert list(binary_search_tree.traversal_DFS("inorder")) == [33, 56, 60]
+
+    assert not binary_search_tree.search(200)
+    binary_search_tree.delete(200)
+    assert not binary_search_tree.search(200)
