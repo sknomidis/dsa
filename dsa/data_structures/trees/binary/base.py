@@ -403,7 +403,7 @@ class BinarySearchTree(_BinaryTreeBase):
         Complexity
         ----------
         Time: O(height)
-        Space: O(1)
+        Space: O(height)
         """
         node = BinaryNode(value)
         if self._root is None:
@@ -411,7 +411,6 @@ class BinarySearchTree(_BinaryTreeBase):
             return
 
         def insert_subtree(root: BinaryNode) -> None:
-            assert value != root.value, "Duplicate element encountered"
             if value < root.value:
                 if root.child_left is None:
                     root.child_left = node
@@ -454,20 +453,19 @@ class BinarySearchTree(_BinaryTreeBase):
                 root.child_right = delete_node_from_subtree_and_return_new_root(root.child_right, value)
                 return root
 
-            # Single-child root
-            if root.child_left is None:
-                # Move right child one level up
-                return root.child_right
-            if root.child_right is None:
-                # Move left child one level up
-                return root.child_left
+            # Deleted node is leaf
+            if root.num_children == 0:
+                return None
 
-            # Successor will be the smallest element of right subtree
+            # Deleted node has one child
+            if root.num_children == 1:
+                # Move child one level up
+                return root.child_left or root.child_right
+
+            # Replace root with smallest element of right subtree
             successor = root.child_right
             while successor.child_left is not None:
                 successor = successor.child_left
-
-            # Replace root with successor
             root.value = successor.value
             root.child_right = delete_node_from_subtree_and_return_new_root(root.child_right, successor.value)
             return root

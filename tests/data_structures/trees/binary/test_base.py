@@ -249,8 +249,6 @@ def test_binary_search_tree_insert(binary_search_tree: trees.BinarySearchTree) -
         assert binary_search_tree.search(value)
         binary_search_tree.assert_consistent()
     assert binary_search_tree.is_full()
-    with pytest.raises(AssertionError):
-        binary_search_tree.insert(35)
 
 
 def test_binary_search_tree_delete(binary_search_tree: trees.BinarySearchTree) -> None:
