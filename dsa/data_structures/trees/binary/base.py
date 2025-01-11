@@ -405,24 +405,7 @@ class BinarySearchTree(_BinaryTreeBase):
         Time: O(height)
         Space: O(height)
         """
-        node = BinaryNode(value)
-        if self._root is None:
-            self._root = node
-            return
-
-        def insert_subtree(root: BinaryNode) -> None:
-            if value < root.value:
-                if root.child_left is None:
-                    root.child_left = node
-                else:
-                    insert_subtree(root.child_left)
-            else:
-                if root.child_right is None:
-                    root.child_right = node
-                else:
-                    insert_subtree(root.child_right)
-
-        insert_subtree(self._root)
+        self._root = self._insert_value_and_return_root(self._root, value)
 
     def delete(self, value: ValueType) -> None:
         """Delete value from a BST using recursion.
@@ -436,72 +419,48 @@ class BinarySearchTree(_BinaryTreeBase):
         Time: O(height)
         Space: O(height)
         """
+        self._root = self._delete_value_and_return_root(self._root, value)
 
-        def delete_node_from_subtree_and_return_new_root(
-            root: BinaryNode | None, value: ValueType
-        ) -> BinaryNode | None:
-            if root is None:
-                return None
+    @classmethod
+    def _insert_value_and_return_root(cls, root: BinaryNode | None, value: ValueType) -> BinaryNode:
+        if root is None:
+            # Empty spot found
+            return BinaryNode(value)
 
-            # Keep searching for node to delete
-            if value < root.value:
-                # Move further down left subtree
-                root.child_left = delete_node_from_subtree_and_return_new_root(root.child_left, value)
-                return root
-            if value > root.value:
-                # Move further down right subtree
-                root.child_right = delete_node_from_subtree_and_return_new_root(root.child_right, value)
-                return root
+        # Recursively apply to appropriate subtree
+        if value < root.value:
+            root.child_left = cls._insert_value_and_return_root(root.child_left, value)
+        else:
+            root.child_right = cls._insert_value_and_return_root(root.child_right, value)
+        return root
 
-            # Deleted node is leaf
-            if root.num_children == 0:
-                return None
+    @classmethod
+    def _delete_value_and_return_root(cls, root: BinaryNode, value: ValueType) -> BinaryNode | None:
+        assert root is not None, f"Value {value} was not found"
 
-            # Deleted node has one child
-            if root.num_children == 1:
-                # Move child one level up
-                return root.child_left or root.child_right
-
-            # Replace root with smallest element of right subtree
-            successor = root.child_right
-            while successor.child_left is not None:
-                successor = successor.child_left
-            root.value = successor.value
-            root.child_right = delete_node_from_subtree_and_return_new_root(root.child_right, successor.value)
+        # Keep searching for node to delete
+        if value < root.value:
+            # Move further down left subtree
+            root.child_left = cls._delete_value_and_return_root(root.child_left, value)
+            return root
+        if value > root.value:
+            # Move further down right subtree
+            root.child_right = cls._delete_value_and_return_root(root.child_right, value)
             return root
 
-        self._root = delete_node_from_subtree_and_return_new_root(self._root, value)
+        # Deleted node is leaf
+        if root.num_children == 0:
+            return None
 
-    @staticmethod
-    def _left_rotation(root: BinaryNode) -> BinaryNode:
-        r"""Rotate subtree as follows:
-             x              y
-            / \            / \
-           T1  y    ->    x   T3
-              / \        / \
-            T2   T3     T1  T2
-        """
-        x = root
-        y = x.child_right
-        assert y is not None
-        t2 = y.child_left
-        x.child_right = t2
-        y.child_left = x
-        return y
+        # Deleted node has one child
+        if root.num_children == 1:
+            # Move child one level up
+            return root.child_left or root.child_right
 
-    @staticmethod
-    def _right_rotation(root: BinaryNode) -> BinaryNode:
-        r"""Rotate subtree as follows:
-             y              x
-            / \            / \
-           x   T3   ->   T1   y
-          / \                / \
-        T1   T2            T2   T3
-        """
-        y = root
-        x = root.child_left
-        assert x is not None
-        t2 = x.child_right
-        x.child_right = y
-        y.child_left = t2
-        return x
+        # Replace root with smallest element of right subtree
+        successor = root.child_right
+        while successor.child_left is not None:
+            successor = successor.child_left
+        root.value = successor.value
+        root.child_right = cls._delete_value_and_return_root(root.child_right, successor.value)
+        return root
