@@ -168,13 +168,13 @@ class BinaryTree:
     def _traversal_BFS(self) -> Iterator[_BinaryNode]:
         if self._root is None:
             return
-        queue_children = collections.deque([self._root])
-        while queue_children:
-            node = queue_children.popleft()
+        queue_nodes = collections.deque([self._root])
+        while queue_nodes:
+            node = queue_nodes.popleft()
             if node.child_left is not None:
-                queue_children.append(node.child_left)
+                queue_nodes.append(node.child_left)
             if node.child_right is not None:
-                queue_children.append(node.child_right)
+                queue_nodes.append(node.child_right)
             yield node
 
     def traversal_DFS(self, variant: Literal["preorder", "inorder", "postorder"]) -> Iterator[ValueType]:
@@ -194,7 +194,6 @@ class BinaryTree:
         Time: O(N)
         Space: O(N)
         """
-        # Depth-first search traversal. Time and space complexity O(N)
         match variant:
             case "preorder":
                 method = self._preorder
