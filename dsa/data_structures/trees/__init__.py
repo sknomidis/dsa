@@ -1,4 +1,4 @@
 from __future__ import annotations
 
-from .binary import BinarySearchTree, BinaryTree
+from .binary import AVLTree, BinarySearchTree, BinaryTree
 from .trie import TrieTree
