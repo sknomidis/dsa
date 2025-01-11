@@ -123,8 +123,9 @@ def test_binary_tree_insert() -> None:
     #  7   8 9
     binary_tree = trees.BinaryTree()
     for value in range(10):
+        assert not binary_tree.search(value)
         binary_tree.insert(value)
-    assert list(binary_tree.traversal_BFS()) == list(range(10))
+        assert binary_tree.search(value)
     assert binary_tree._root.value == 0
     assert binary_tree._root.child_left.value == 1
     assert binary_tree._root.child_right.value == 2
@@ -135,6 +136,13 @@ def test_binary_tree_insert() -> None:
     assert binary_tree._root.child_left.child_left.child_left.value == 7
     assert binary_tree._root.child_left.child_left.child_right.value == 8
     assert binary_tree._root.child_left.child_right.child_left.value == 9
+
+
+def test_binary_tree_delete(binary_tree: trees.BinaryTree) -> None:
+    for value in [2, 1, 10, 4, 3, 6, 0]:
+        assert binary_tree.search(value)
+        binary_tree.delete(value)
+        assert not binary_tree.search(value)
 
 
 def test_binary_tree_traversal_BFS(binary_tree: trees.BinaryTree) -> None:

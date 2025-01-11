@@ -11,6 +11,12 @@ class BinaryTree:
     """Hierarchical data structure with each node having at most two children.
 
     It is mainly used for efficient data storage and retrieval.
+
+    There are two main representation methods:
+    - Nodes and References: Requires more memory per node and is not cache
+      friendly, but it is more flexible and, thus, common.
+    - Array: Better locality of reference, but it can be very inefficient for
+      non-complete trees. It is typically used in heaps.
     """
 
     def __init__(self) -> None:
@@ -62,6 +68,19 @@ class BinaryTree:
         height_total = self._root.height if self._root is not None else 0
         return is_subtree_perfect(self._root, height_total)
 
+    def search(self, value: ValueType) -> bool:
+        """Return `True` if given value exists in tree, `False` otherwise.
+
+        Complexity
+        ----------
+        Time: O(N)
+        Space: O(N)
+        """
+        for node in self._traversal_BFS():
+            if node.value == value:
+                return True
+        return False
+
     def insert(self, value: ValueType) -> None:
         """Breadth-First Search tree insertion (level order).
 
@@ -80,6 +99,54 @@ class BinaryTree:
                 return
             if node.child_right is None:
                 node.child_right = node_inserted
+                return
+        raise AssertionError
+
+    def delete(self, value: ValueType) -> None:
+        """Delete given value from tree.
+
+        Complexity
+        ----------
+        Time: O(N)
+        Space: O(N)
+        """
+
+        def delete_node_and_return_replacement(root: _BinaryNode) -> _BinaryNode | None:
+            assert root is not None
+            if root.num_children == 0:
+                # Leaf nodes can be simply removed
+                return None
+            if root.num_children == 1:
+                # Replace node with its child
+                return root.child_left or root.child_right
+
+            # Find node with one leaf child
+            leaf_parent = root
+            while leaf_parent.child_left.num_children > 0 and leaf_parent.child_right.num_children > 0:
+                leaf_parent = leaf_parent.child_left or leaf_parent.child_right
+
+            # Replace root with leaf child
+            if leaf_parent.child_left.num_children == 0:
+                # Left child is leaf
+                root.value = leaf_parent.child_left.value
+                leaf_parent.child_left = None
+            else:
+                # Right child is leaf
+                root.value = leaf_parent.child_right.value
+                leaf_parent.child_right = None
+            return root
+
+        assert self._root is not None
+        if self._root.value == value:
+            self._root = delete_node_and_return_replacement(self._root)
+            return
+        for node in self._traversal_BFS():
+            assert node.value != value
+            if node.child_left.value == value:
+                node.child_left = delete_node_and_return_replacement(node.child_left)
+                return
+            if node.child_right.value == value:
+                node.child_right = delete_node_and_return_replacement(node.child_right)
                 return
         raise AssertionError
 
