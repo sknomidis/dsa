@@ -20,7 +20,7 @@ class BinaryTree:
     """
 
     def __init__(self) -> None:
-        self._root: _BinaryNode | None = None
+        self._root: BinaryNode | None = None
 
     def is_balanced(self) -> bool:
         """Height difference between all left and right subtrees is at most 1."""
@@ -53,7 +53,7 @@ class BinaryTree:
     def is_perfect(self) -> bool:
         """Internal nodes have 2 children, and leaf nodes are on same level."""
 
-        def is_subtree_perfect(root: _BinaryNode, height: int) -> bool:
+        def is_subtree_perfect(root: BinaryNode, height: int) -> bool:
             if root is None:
                 return True
             if root.num_children == 1:
@@ -89,7 +89,7 @@ class BinaryTree:
         Time: O(N)
         Space: O(N)
         """
-        node_inserted = _BinaryNode(value)
+        node_inserted = BinaryNode(value)
         if self._root is None:
             self._root = node_inserted
             return
@@ -111,7 +111,7 @@ class BinaryTree:
         Space: O(N)
         """
 
-        def delete_node_and_return_replacement(root: _BinaryNode) -> _BinaryNode | None:
+        def delete_node_and_return_replacement(root: BinaryNode) -> BinaryNode | None:
             assert root is not None
             if root.num_children == 0:
                 # Leaf nodes can be simply removed
@@ -165,7 +165,7 @@ class BinaryTree:
         for node in self._traversal_BFS():
             yield node.value
 
-    def _traversal_BFS(self) -> Iterator[_BinaryNode]:
+    def _traversal_BFS(self) -> Iterator[BinaryNode]:
         if self._root is None:
             return
         queue_nodes = collections.deque([self._root])
@@ -207,7 +207,7 @@ class BinaryTree:
             yield node.value
 
     @classmethod
-    def _preorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
+    def _preorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
         """root-left-right traversal policy.
 
         Topologically sorted, since parents are processed before their children.
@@ -223,7 +223,7 @@ class BinaryTree:
         yield from cls._preorder(root.child_right)
 
     @classmethod
-    def _inorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
+    def _inorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
         """left-root-right traversal policy.
 
         Applications:
@@ -238,7 +238,7 @@ class BinaryTree:
         yield from cls._inorder(root.child_right)
 
     @classmethod
-    def _postorder(cls, root: _BinaryNode | None) -> Iterator[_BinaryNode]:
+    def _postorder(cls, root: BinaryNode | None) -> Iterator[BinaryNode]:
         """left-right-root traversal policy.
 
         Applications:
@@ -255,7 +255,7 @@ class BinaryTree:
 
 
 @dataclasses.dataclass()
-class _BinaryNode:
+class BinaryNode:
     value: ValueType
     child_left: Self | None = None
     child_right: Self | None = None
