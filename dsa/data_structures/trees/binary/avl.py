@@ -8,85 +8,30 @@ class AVLTree(base.BinarySearchTree):
 
     In an AVL tree, height difference between the left and right branches for
     each node is at most one. This keeps the total height at log(N), which in
-    turn limits insert, delete, and search complexity to O(log N).
+    turn limits insertion, deletion, and search complexity to O(log N).
 
-    Comparison with other self-balancing trees, they:
-    + are simpler
-    + have faster search, due to strict balancing
-    - have slower insert and delete, due to more complex balancing
+    Pros
+    ----
+    - simple
+    - fast search, due to strict balancing
+
+    Cons
+    ----
+    - slow insertion and deletion, due to more complex balancing
     """
 
-    def insert(self, value: base.ValueType) -> base.ValueType:
-        """Insert a new value to AVL tree and rebalance subtrees.
+    @classmethod
+    def _insert_value_and_return_root(cls, root: base.BinaryNode | None, value: base.ValueType) -> base.BinaryNode:
+        root = super()._insert_value_and_return_root(root, value)
+        root = cls._rebalance_subtree_and_return_new_root(root)
+        return root
 
-        Note that, there is no support for duplicate values.
-
-        Complexity
-        ----------
-        Time: O(height)
-        Space: O(height)
-
-        where height is log(N).
-        """
-
-        def insert_rebalance_and_return_new_root(root: base.BinaryNode | None) -> base.BinaryNode:
-            if root is None:
-                # Insert value to leaf
-                return base.BinaryNode(value)
-
-            # Recursively apply to appropriate subtree
-            assert value != root.value, "Duplicates are not allowed"
-            if value < root.value:
-                root.child_left = insert_rebalance_and_return_new_root(root.child_left)
-            else:
-                root.child_right = insert_rebalance_and_return_new_root(root.child_right)
-
-            # Rebalance if necessary
-            return self._rebalance_subtree_and_return_new_root(root)
-
-        self._root = insert_rebalance_and_return_new_root(self._root)
-
-    def delete(self, value: base.ValueType) -> None:
-        """Delete a value from AVL tree and rebalance subtrees.
-
-        An exception is raised if the value is not found.
-
-        Complexity
-        ----------
-        Time: O(height)
-        Space: O(height)
-
-        where height is log(N).
-        """
-
-        def delete_rebalance_and_return_new_root(
-            root: base.BinaryNode, value: base.ValueType
-        ) -> base.BinaryNode | None:
-            assert root is not None, "Value not found"
-
-            if value < root.value:
-                root.child_left = delete_rebalance_and_return_new_root(root.child_left, value)
-            elif value > root.value:
-                root.child_right = delete_rebalance_and_return_new_root(root.child_right, value)
-            else:
-                # Delete node
-                if root.num_children == 0:
-                    # No children, no worries
-                    return None
-                if root.num_children == 1:
-                    # Only child is moved one level up
-                    root = root.child_left or root.child_right
-                else:
-                    # Replace deleted node with smallest element in right branch
-                    root_new = root.child_right
-                    while root_new.child_left is not None:
-                        root_new = root_new.child_left
-                    root.value = root_new.value
-                    root.child_right = delete_rebalance_and_return_new_root(root.child_right, root_new.value)
-
-            return self._rebalance_subtree_and_return_new_root(root)
-
-        self._root = delete_rebalance_and_return_new_root(self._root, value)
+    @classmethod
+    def _delete_value_and_return_root(cls, root: base.BinaryNode, value: base.ValueType) -> base.BinaryNode | None:
+        root = super()._delete_value_and_return_root(root, value)
+        if root is not None:
+            root = cls._rebalance_subtree_and_return_new_root(root)
+        return root
 
     @classmethod
     def _rebalance_subtree_and_return_new_root(cls, root: base.BinaryNode) -> base.BinaryNode:
@@ -139,18 +84,56 @@ class AVLTree(base.BinarySearchTree):
         balance_child_left = 0 if root.child_left is None else root.child_left.balance
         balance_child_right = 0 if root.child_right is None else root.child_right.balance
 
-        if balance > 1 and balance_child_left >= 0:
-            # left-left
-            return cls._right_rotation(root)
-        if balance < -1 and balance_child_right <= 0:
-            # right-right
-            return cls._left_rotation(root)
-        if balance > 1 and balance_child_left < 0:
-            # left-right
-            root.child_left = cls._left_rotation(root.child_left)
-            return cls._right_rotation(root)
-        if balance < -1 and balance_child_right > 0:
-            # right-left
-            root.child_right = cls._right_rotation(root.child_right)
-            return cls._left_rotation(root)
+        if balance > 1:
+            # Left skewed
+            if balance_child_left >= 0:
+                # left-left
+                return cls._right_rotation(root)
+            else:
+                # left-right
+                root.child_left = cls._left_rotation(root.child_left)
+                return cls._right_rotation(root)
+        if balance < -1:
+            # Right skewed
+            if balance_child_right <= 0:
+                # right-right
+                return cls._left_rotation(root)
+            else:
+                # right-left
+                root.child_right = cls._right_rotation(root.child_right)
+                return cls._left_rotation(root)
         return root
+
+    @staticmethod
+    def _left_rotation(root: base.BinaryNode) -> base.BinaryNode:
+        r"""Rotate subtree as follows:
+             x              y
+            / \            / \
+           T1  y    ->    x   T3
+              / \        / \
+            T2   T3     T1  T2
+        """
+        x = root
+        y = x.child_right
+        assert y is not None
+        t2 = y.child_left
+        x.child_right = t2
+        y.child_left = x
+        return y
+
+    @staticmethod
+    def _right_rotation(root: base.BinaryNode) -> base.BinaryNode:
+        r"""Rotate subtree as follows:
+             y              x
+            / \            / \
+           x   T3   ->   T1   y
+          / \                / \
+        T1   T2            T2   T3
+        """
+        y = root
+        x = root.child_left
+        assert x is not None
+        t2 = x.child_right
+        x.child_right = y
+        y.child_left = t2
+        return x

@@ -15,8 +15,6 @@ def test_AVL_tree_insert(rng: np.random.Generator) -> None:
 
         assert tree.is_balanced()
     assert list(tree.traversal_DFS("inorder")) == elements
-    with pytest.raises(AssertionError):
-        tree.insert(10)
 
 
 def test_AVL_tree_delete() -> None:

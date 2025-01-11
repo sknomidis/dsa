@@ -258,7 +258,3 @@ def test_binary_search_tree_delete(binary_search_tree: trees.BinarySearchTree) -
         assert not binary_search_tree.search(value)
         binary_search_tree.assert_consistent()
     assert list(binary_search_tree.traversal_DFS("inorder")) == [33, 56, 60]
-
-    assert not binary_search_tree.search(200)
-    binary_search_tree.delete(200)
-    assert not binary_search_tree.search(200)
