@@ -17,7 +17,7 @@ hash_functions = [hash_tables.division_method, hash_tables.multiplication_method
 @pytest.mark.parametrize("hash_function", hash_functions, ids=lambda c: c.__name__)
 @pytest.mark.parametrize("table_type", table_types, ids=lambda c: c.__name__)
 def test_hash_table_insert_one(table_type: type[hash_tables.HashTable], hash_function: hash_tables.HashFunction):
-    table = table_type(hash_function=hash_function, n_buckets=8)
+    table = table_type(hash_function=hash_function, num_buckets=8)
     assert table[42] is None
     assert table.load_factor == approx(0.0)
 
@@ -30,7 +30,7 @@ def test_hash_table_insert_one(table_type: type[hash_tables.HashTable], hash_fun
 @pytest.mark.parametrize("hash_function", hash_functions, ids=lambda c: c.__name__)
 @pytest.mark.parametrize("table_type", table_types, ids=lambda c: c.__name__)
 def test_hash_table_remove_one(table_type: type[hash_tables.HashTable], hash_function: hash_tables.HashFunction):
-    table = table_type(hash_function=hash_function, n_buckets=8)
+    table = table_type(hash_function=hash_function, num_buckets=8)
     table[420] = "420"
     assert table[420] == "420"
     assert table.load_factor == approx(1.0 / 8.0)
@@ -41,13 +41,13 @@ def test_hash_table_remove_one(table_type: type[hash_tables.HashTable], hash_fun
     assert table.load_factor == approx(0.0)
 
 
-@pytest.mark.parametrize("n_buckets", [4, 8, 16, 32], ids=lambda s: f"{s}_bucket")
+@pytest.mark.parametrize("num_buckets", [4, 8, 16, 32], ids=lambda s: f"{s}_bucket")
 @pytest.mark.parametrize("hash_function", hash_functions, ids=lambda c: c.__name__)
 @pytest.mark.parametrize("table_type", table_types, ids=lambda c: c.__name__)
 def test_hash_table_handle_collisions(
-    table_type: type[hash_tables.HashTable], hash_function: hash_tables.HashFunction, n_buckets: int
+    table_type: type[hash_tables.HashTable], hash_function: hash_tables.HashFunction, num_buckets: int
 ):
-    table = table_type(hash_function=hash_function, n_buckets=n_buckets)
+    table = table_type(hash_function=hash_function, num_buckets=num_buckets)
     for key in range(2, 40, 2):
         table[key] = str(key)
         assert table.load_factor <= 0.75
