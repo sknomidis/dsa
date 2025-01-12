@@ -4,6 +4,8 @@ from typing import Protocol
 
 
 class FibonacciAlgorithm(Protocol):
+    """Given a positive integer `n`, find the n-th Fibonacci number."""
+
     def __call__(self, n: int) -> int: ...
 
 
