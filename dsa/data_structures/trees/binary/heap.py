@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import math
-from typing import Iterator, Sequence, TypeVar
+from typing import Iterator, TypeVar
 
 ValueType = TypeVar("ValueType")
 
@@ -13,7 +13,8 @@ class Heap(abc.ABC):
     In the min (max) heap, the minimum (maximum) element is always at the root.
     The value of each node should be smaller (larger) than that of its children.
 
-    An array tree representation is used under the hood, for efficiency.
+    Since heap is a complete binary tree, an array representation is used under
+    the hood, for efficiency.
 
     Applications
     ------------
@@ -23,21 +24,17 @@ class Heap(abc.ABC):
     - Graph algorithms
     """
 
-    def __init__(self, elements: Sequence[ValueType] | None = None, max_size: int = 100) -> None:
+    def __init__(self, *, size_max: int = 100) -> None:
+        self._array: list[ValueType | None] = size_max * [None]
         self._size = 0
-        self._array: list[ValueType | None] = max_size * [None]
-        if elements is not None:
-            assert len(elements) <= max_size
-            for element in elements:
-                self.insert(element)
 
     @property
     def size(self) -> int:
         return self._size
 
     @property
-    def is_empty(self) -> int:
-        return self.size == 0
+    def size_max(self) -> int:
+        return len(self._array)
 
     def __iter__(self) -> Iterator[ValueType]:
         """Breadth-First Search tree traversal (level order).
@@ -47,8 +44,7 @@ class Heap(abc.ABC):
         Time: O(N)
         Space: O(1)
         """
-        for value in self._array[: self.size]:
-            yield value
+        yield from self._array[: self.size]
 
     def get_extremum(self) -> ValueType:
         """Return extremum value from heap.
@@ -63,103 +59,97 @@ class Heap(abc.ABC):
     def insert(self, value: ValueType) -> None:
         """Insert new element to heap.
 
+        More specifically, it places the new value at the end of the array, and
+        progressively moves it up until the heap property is restored.
+
         Complexity
         ----------
         Time: O(log N)
         Space: O(1)
         """
-        assert self.size < len(self._array)
-
-        # Insert element at the end
-        index = self._size
-        index_parent = self._get_index_parent(index)
-        self._array[index] = value
+        assert self.size < self.size_max
+        index_inserted = self._size
+        self._array[index_inserted] = value
         self._size += 1
+        self._heapify_up(index_inserted)
 
-        # Move element up until heap property is satisfied
-        while index > 0 and not self._is_heap(index_parent, index):
-            self._swap_elements(index, index_parent)
-            index = index_parent
-            index_parent = self._get_index_parent(index)
-
-    def extract_extremum(self) -> ValueType:
+    def pop(self) -> ValueType:
         """Remove and return extremum.
+
+        It replaces the root node with the last one, and progressively moves it
+        down until the heap property is restored.
 
         Complexity
         ----------
         Time: O(log N)
-        Space: O(log N)
+        Space: O(1)
         """
         assert self.size > 0
-        # Extract extremum
         value = self._array[0]
-        # Move last element to root and update size
-        self._array[0] = self._array[self.size - 1]
+        self._array[0] = None
+        self._swap_values(0, self.size - 1)
         self._size -= 1
-        if self.size == 1:
-            return value
-        # Restore heap property
-        self._heapify(index_root=0)
+        self._heapify_down(0)
         return value
 
     def delete(self, value: ValueType) -> None:
         """Remove element from heap.
 
-        Complexity
-        ----------
-        Time: O(N), searching is the bottleneck
-        Space: O(log N)
-        """
-        assert self.size > 0
-        # Find element and its parent
-        index = self._find_element(value)
-        index_parent = self._get_index_parent(index)
-        # Make element the new extremum
-        self._array[index] = self._get_most_extreme_possible_value()
-        # Move element up until heapify property is restored.
-        while index > 0 and not self._is_heap(index_parent, index):
-            self._swap_elements(index, self._get_index_parent(index))
-            index = self._get_index_parent(index)
-            index_parent = self._get_index_parent(index)
-        # Extract artificially-extreme value from heap
-        self.extract_extremum()
-
-    def _heapify(self, index_root: int) -> None:
-        """Progressively move root down until heap property is satisfied.
-
-        Complexity
-        ----------
-        Time: O(log N)
-        Space: O(log N)
-        """
-        index_left = self._get_index_child_left(index_root)
-        index_right = self._get_index_child_right(index_root)
-        index_extremum = index_root
-        if index_left < self.size and not self._is_heap(index_root, index_left):
-            # Left child should be moved up
-            index_extremum = index_left
-        if index_right < self.size and not self._is_heap(index_extremum, index_right):
-            # Right child should be moved up
-            index_extremum = index_right
-        if index_extremum != index_root:
-            # Move child up and repeat in branch
-            self._swap_elements(index_root, index_extremum)
-            self._heapify(index_extremum)
-
-    def _find_element(self, value: ValueType) -> int:
-        """Search for given element.
+        It finds the node to remove, replaces its value with the most extreme
+        one possible (plus or minus infinity), moves it to the top, and pops it.
 
         Complexity
         ----------
         Time: O(N)
         Space: O(1)
         """
-        for index, value_stored in enumerate(self._array[: self.size]):
-            if value_stored == value:
-                return index
-        raise AssertionError("Value not found")
+        assert self.size > 0
+        index_deleted = self._array.index(value)
+        self._array[index_deleted] = self._get_most_extreme_possible_value()
+        self._heapify_up(index_deleted)
+        self.pop()
 
-    def _swap_elements(self, index_1: int, index_2: int) -> None:
+    def _heapify_up(self, index_inserted: int) -> None:
+        """Move node up until heap property is satisfied.
+
+        Complexity
+        ----------
+        Time: O(log N)
+        Space: O(1)
+        """
+        index_parent = self._get_index_parent(index_inserted)
+        while index_inserted > 0 and not self._is_heap(index_parent, index_inserted):
+            self._swap_values(index_inserted, index_parent)
+            index_inserted = index_parent
+            index_parent = self._get_index_parent(index_inserted)
+
+    def _heapify_down(self, index_inserted: int) -> None:
+        """Move node down until heap property is satisfied.
+
+        Complexity
+        ----------
+        Time: O(log N)
+        Space: O(1)
+        """
+        while index_inserted < self.size - 1:
+            # Find next node with which to swap inserted one
+            index_next = index_inserted
+            index_left = self._get_index_child_left(index_inserted)
+            index_right = self._get_index_child_right(index_inserted)
+            if index_left < self.size and not self._is_heap(index_inserted, index_left):
+                index_next = index_left
+            if index_right < self.size and not self._is_heap(index_next, index_right):
+                index_next = index_right
+
+            if index_next != index_inserted:
+                # Move child up and repeat in branch
+                self._swap_values(index_inserted, index_next)
+                index_inserted = index_next
+            else:
+                # Heap property has been restored
+                return
+
+    def _swap_values(self, index_1: int, index_2: int) -> None:
         self._array[index_1], self._array[index_2] = self._array[index_2], self._array[index_1]
 
     @staticmethod
