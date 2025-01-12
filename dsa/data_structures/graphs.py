@@ -3,30 +3,33 @@ from __future__ import annotations
 import abc
 import collections
 import math
-import numbers
-from typing import Callable, Iterator, Literal, Sequence, TypeAlias, TypeVar
+from typing import Iterator, Literal, NamedTuple, Self, TypeAlias, TypeVar
 
-GraphElementType = TypeVar("GraphElementType")
 RepresentationType: TypeAlias = Literal["adjacency_list", "adjacency_matrix", "pointers_and_objects"]
+
+ValueType = TypeVar("ValueType")
+WeightType: TypeAlias = float
 
 
 class Graph:
-    def __init__(self, *, representation: RepresentationType, directed: bool) -> None:
-        self._values: list[GraphElementType] = []
-        self._directed = directed
+    """A collection of nodes connected by edges."""
+
+    def __init__(self, *, representation: RepresentationType = "adjacency_matrix", directed: bool = True) -> None:
         self._representation = self._get_representation(representation)
+        self._directed = directed
+        self._values: list[ValueType] = []
 
     @property
-    def values(self) -> list[GraphElementType]:
+    def values(self) -> list[ValueType]:
         return self._values
 
     def __len__(self) -> int:
         return len(self._values)
 
-    def traverse_BFS(self, value: GraphElementType) -> Iterator[GraphElementType]:
+    def traverse_BFS(self, value: ValueType) -> Iterator[ValueType]:
         """Breadth-First Search graph traversal.
 
-        Traverse vertices level by level, starting with neighbors of a vertex,
+        Traverse nodes level by level, starting with neighbors of a node,
         then their neighbors, etc.
 
         Extra care should be taken to avoid cycles.
@@ -42,17 +45,17 @@ class Graph:
 
         queue = collections.deque([index])
         while queue:
-            index = queue.popleft()
+            index = queue.pop()
             yield self._values[index]
             for index_neighbor, _ in self._representation.iterate_neighbors(index):
                 if not has_been_traversed[index_neighbor]:
                     has_been_traversed[index_neighbor] = True
-                    queue.append(index_neighbor)
+                    queue.insert(0, index_neighbor)
 
-    def traverse_DFS(self, value: GraphElementType) -> Iterator[GraphElementType]:
+    def traverse_DFS(self, value: ValueType) -> Iterator[ValueType]:
         """Depth-First Search graph traversal.
 
-        Traverse vertices one by one, starting with first neighbor of a vertex,
+        Traverse nodes one by one, starting with first neighbor of a node,
         then its first neighbor, etc.
 
         Extra care should be taken to avoid cycles.
@@ -75,44 +78,48 @@ class Graph:
         for index in traverse(self._get_index(value)):
             yield self._values[index]
 
-    def iterate_neighbors(self, value: GraphElementType) -> Iterator[tuple[GraphElementType, float]]:
-        """Iterate through adjacent nodes."""
+    def iterate_neighbors(self, value: ValueType) -> Iterator[tuple[ValueType, WeightType]]:
+        """Iterate through adjacent nodes and correpsonding edge weights.
+
+        Complexity
+        ----------
+        Time: O(V + E)
+        Space: O(1)
+        """
         index = self._get_index(value)
         for index_neighbor, weight in self._representation.iterate_neighbors(index):
             yield self._values[index_neighbor], weight
 
-    def has_value(self, value: GraphElementType) -> bool:
+    def has_value(self, value: ValueType) -> bool:
         """Check if value exists in graph or not."""
         return value in self._values
 
-    def add_value(self, value: GraphElementType) -> None:
+    def add_value(self, value: ValueType) -> None:
         """Add value to graph."""
         assert not self.has_value(value)
         self._values.append(value)
-        self._representation.add_vertex()
+        self._representation.add_node()
 
-    def remove_value(self, value: GraphElementType) -> None:
-        """Remove value from graph."""
+    def delete_value(self, value: ValueType) -> None:
+        """Delete value from graph."""
         index = self._get_index(value)
         del self._values[index]
-        self._representation.remove_vertex(index)
+        self._representation.delete_node(index)
 
-    def has_connection(self, value_1: GraphElementType, value_2: GraphElementType) -> bool:
+    def has_connection(self, value_1: ValueType, value_2: ValueType) -> bool:
         """Check if values are directly connected."""
         index_1 = self._get_index(value_1)
         index_2 = self._get_index(value_2)
-        if self._directed:
-            return self._representation.has_edge(index_1, index_2)
-        return self._representation.has_edge(index_1, index_2) or self._representation.has_edge(index_2, index_1)
+        return self._representation.has_edge(index_1, index_2)
 
-    def get_connection_weight(self, value_1: GraphElementType, value_2: GraphElementType) -> float:
+    def get_connection_weight(self, value_1: ValueType, value_2: ValueType) -> WeightType:
         """Get weight of connection between values."""
         assert self.has_connection(value_1, value_2)
         index_1 = self._get_index(value_1)
         index_2 = self._get_index(value_2)
         return self._representation.get_edge(index_1, index_2)
 
-    def add_connection(self, value_1: GraphElementType, value_2: GraphElementType, *, weight: float = 1.0) -> None:
+    def add_connection(self, value_1: ValueType, value_2: ValueType, *, weight: WeightType = 1.0) -> None:
         """Add direct connection between values."""
         assert weight > 0.0
         assert not self.has_connection(value_1, value_2)
@@ -122,20 +129,18 @@ class Graph:
         if not self._directed:
             self._representation.add_edge(index_2, index_1, weight=weight)
 
-    def remove_connection(self, value_1: GraphElementType, value_2: GraphElementType) -> None:
-        """Remove direct connection between values."""
+    def delete_connection(self, value_1: ValueType, value_2: ValueType) -> None:
+        """Delete direct connection between values."""
         assert self.has_connection(value_1, value_2)
         index_1 = self._get_index(value_1)
         index_2 = self._get_index(value_2)
-        self._representation.remove_edge(index_1, index_2)
+        self._representation.delete_edge(index_1, index_2)
         if not self._directed:
-            self._representation.remove_edge(index_2, index_1)
+            self._representation.delete_edge(index_2, index_1)
 
-    def _get_index(self, value: GraphElementType) -> int:
+    def _get_index(self, value: ValueType) -> int:
         assert self.has_value(value)
-        for index, value_stored in enumerate(self._values):
-            if value_stored == value:
-                return index
+        return self._values.index(value)
 
     @staticmethod
     def _get_representation(representation: RepresentationType) -> _GraphRepresentation:
@@ -150,7 +155,9 @@ class Graph:
                 raise AssertionError
 
 
-_VertexAndWeight = collections.namedtuple("_VertexAndWeight", ["vertex", "weight"])
+class _NodeAndWeight(NamedTuple):
+    index: int
+    weight: WeightType
 
 
 class _GraphRepresentation(abc.ABC):
@@ -159,35 +166,37 @@ class _GraphRepresentation(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def n_vertices(self) -> int: ...
+    def num_nodes(self) -> int: ...
 
     @abc.abstractmethod
-    def iterate_neighbors(self, vertex: int) -> Iterator[_VertexAndWeight]: ...
+    def iterate_neighbors(self, index: int) -> Iterator[_NodeAndWeight]: ...
 
     @abc.abstractmethod
-    def add_vertex(self) -> None: ...
+    def add_node(self) -> None: ...
 
     @abc.abstractmethod
-    def remove_vertex(self, vertex: int) -> None: ...
+    def delete_node(self, index: int) -> None: ...
 
     @abc.abstractmethod
-    def has_edge(self, vertex_1: int, vertex_2: int) -> bool: ...
+    def has_edge(self, index_1: int, index_2: int) -> bool: ...
 
     @abc.abstractmethod
-    def get_edge(self, vertex_1: int, vertex_2: int) -> float: ...
+    def get_edge(self, index_1: int, index_2: int) -> WeightType: ...
 
     @abc.abstractmethod
-    def add_edge(self, vertex_1: int, vertex_2: int, *, weight: float) -> None: ...
+    def add_edge(self, index_1: int, index_2: int, *, weight: WeightType) -> None: ...
 
     @abc.abstractmethod
-    def remove_edge(self, vertex_1: int, vertex_2: int) -> None: ...
+    def delete_edge(self, index_1: int, index_2: int) -> None: ...
 
 
 class _AdjacencyList(_GraphRepresentation):
     """Adjacency List graph representation.
 
     Uses a list of lists to keep track of edges. Each row contains the neighbors
-    indices for that vertex.
+    indices for that node.
+
+    Ideal for sparse graphs.
 
     Complexity
     ----------
@@ -195,73 +204,57 @@ class _AdjacencyList(_GraphRepresentation):
     """
 
     def __init__(self) -> None:
-        self._adjacency_list: list[list[_VertexAndWeight]] = []
+        self._adjacency_list: list[list[_NodeAndWeight]] = []
 
     @property
-    def n_vertices(self) -> int:
+    def num_nodes(self) -> int:
         return len(self._adjacency_list)
 
-    def iterate_neighbors(self, vertex: int) -> Iterator[_VertexAndWeight]:
-        # Time complexity: O(E)
-        assert 0 <= vertex < self.n_vertices
-        yield from self._adjacency_list[vertex]
+    def iterate_neighbors(self, index: int) -> Iterator[_NodeAndWeight]:
+        # O(E)
+        yield from self._adjacency_list[index]
 
-    def add_vertex(self) -> None:
-        # Time complexity: O(1)
+    def add_node(self) -> None:
+        # O(1)
         self._adjacency_list.append([])
 
-    def remove_vertex(self, vertex: int) -> None:
-        # Time complexity: O(1)
-        assert vertex < self.n_vertices
-        del self._adjacency_list[vertex]
-        for neighbors in self._adjacency_list:
-            for vertex_and_weight in neighbors:
-                if vertex_and_weight.vertex == vertex:
-                    neighbors.remove(vertex_and_weight)
-                    break
+    def delete_node(self, index: int) -> None:
+        # O(N + E)
+        for index_neighbor in range(len(self._adjacency_list)):
+            if index_neighbor != index:
+                self.delete_edge(index_neighbor, index)
+        del self._adjacency_list[index]
 
-    def has_edge(self, vertex_1: int, vertex_2: int) -> bool:
-        # Time complexity: O(E)
-        assert vertex_1 != vertex_2
-        assert 0 <= vertex_1 < self.n_vertices
-        assert 0 <= vertex_2 < self.n_vertices
-        for vertex_and_weight in self._adjacency_list[vertex_1]:
-            if vertex_and_weight.vertex == vertex_2:
-                return True
-        return False
+    def has_edge(self, index_1: int, index_2: int) -> bool:
+        # O(E)
+        return any(index_and_weight.index == index_2 for index_and_weight in self._adjacency_list[index_1])
 
-    def get_edge(self, vertex_1: int, vertex_2: int) -> float:
-        assert vertex_1 != vertex_2
-        assert 0 <= vertex_1 < self.n_vertices
-        assert 0 <= vertex_2 < self.n_vertices
-        for vertex_and_weight in self._adjacency_list[vertex_1]:
-            if vertex_and_weight.vertex == vertex_2:
-                return vertex_and_weight.weight
+    def get_edge(self, index_1: int, index_2: int) -> WeightType:
+        # O(E)
+        for index_and_weight in self._adjacency_list[index_1]:
+            if index_and_weight.index == index_2:
+                return index_and_weight.weight
         return math.inf
 
-    def add_edge(self, vertex_1: int, vertex_2: int, *, weight: float) -> None:
-        # Time complexity: O(E)
-        assert vertex_1 != vertex_2
-        assert 0 <= vertex_1 < self.n_vertices
-        assert 0 <= vertex_2 < self.n_vertices
-        vertex_and_weight = _VertexAndWeight(vertex_2, weight)
-        _add_element_sorted(self._adjacency_list[vertex_1], vertex_and_weight, key=lambda t: t.vertex)
+    def add_edge(self, index_1: int, index_2: int, *, weight: WeightType) -> None:
+        # O(E)
+        self._adjacency_list[index_1].append(_NodeAndWeight(index_2, weight))
+        self._adjacency_list[index_1].sort(key=lambda t: t.index)
 
-    def remove_edge(self, vertex_1: int, vertex_2: int) -> None:
-        # Time complexity: O(E)
-        assert vertex_1 != vertex_2
-        assert 0 <= vertex_1 < self.n_vertices
-        assert 0 <= vertex_2 < self.n_vertices
-        for vertex_and_weight in self._adjacency_list[vertex_1]:
-            if vertex_and_weight.vertex == vertex_2:
-                self._adjacency_list[vertex_1].remove(vertex_and_weight)
+    def delete_edge(self, index_1: int, index_2: int) -> None:
+        # O(E)
+        for index_and_weight in self._adjacency_list[index_1]:
+            if index_and_weight.index == index_2:
+                self._adjacency_list[index_1].remove(index_and_weight)
 
 
 class _AdjacencyMatrix(_GraphRepresentation):
     """Adjacency Matrix graph representation.
 
     Uses a VxV matrix to keep track of edges. The ij-th element is `True` if
-    vertex i is connected to vertex j, and `False` otherwise.
+    node i is connected to node j, and `False` otherwise.
+
+    Ideal for dense graphs.
 
     Complexity
     ----------
@@ -269,51 +262,51 @@ class _AdjacencyMatrix(_GraphRepresentation):
     """
 
     def __init__(self) -> int:
-        self._adjacency_matrix: list[list[float]] = []
+        self._adjacency_matrix: list[list[WeightType]] = []
 
     @property
-    def n_vertices(self) -> int:
+    def num_nodes(self) -> int:
         return len(self._adjacency_matrix)
 
-    def iterate_neighbors(self, vertex: int) -> Iterator[_VertexAndWeight]:
-        # Time complexity: O(V)
-        for neighbor, weight in enumerate(self._adjacency_matrix[vertex]):
+    def iterate_neighbors(self, index: int) -> Iterator[_NodeAndWeight]:
+        # O(V)
+        for index_neighbor, weight in enumerate(self._adjacency_matrix[index]):
             if weight > 0.0:
-                yield _VertexAndWeight(neighbor, weight)
+                yield _NodeAndWeight(index_neighbor, weight)
 
-    def add_vertex(self) -> None:
-        # Time complexity: O(V**2)
-        self._adjacency_matrix.append(self.n_vertices * [0.0])
+    def add_node(self) -> None:
+        # O(V**2)
+        self._adjacency_matrix.append(self.num_nodes * [0.0])
         for row in self._adjacency_matrix:
             row.append(0.0)
 
-    def remove_vertex(self, vertex: int) -> None:
-        # Time complexity: O(V**2)
-        del self._adjacency_matrix[vertex]
+    def delete_node(self, index: int) -> None:
+        # O(V**2)
+        del self._adjacency_matrix[index]
         for row in self._adjacency_matrix:
-            del row[vertex]
+            del row[index]
 
-    def has_edge(self, vertex_1: int, vertex_2: int) -> bool:
-        # Time complexity: O(1)
-        return self._adjacency_matrix[vertex_1][vertex_2] > 0.0
+    def has_edge(self, index_1: int, index_2: int) -> bool:
+        # O(1)
+        return self._adjacency_matrix[index_1][index_2] > 0.0
 
-    def get_edge(self, vertex_1: int, vertex_2: int) -> float:
-        return self._adjacency_matrix[vertex_1][vertex_2]
+    def get_edge(self, index_1: int, index_2: int) -> WeightType:
+        return self._adjacency_matrix[index_1][index_2]
 
-    def add_edge(self, vertex_1: int, vertex_2: int, *, weight: float) -> None:
-        # Time complexity: O(1)
+    def add_edge(self, index_1: int, index_2: int, *, weight: WeightType) -> None:
+        # O(1)
         assert weight > 0.0
-        self._adjacency_matrix[vertex_1][vertex_2] = weight
+        self._adjacency_matrix[index_1][index_2] = weight
 
-    def remove_edge(self, vertex_1: int, vertex_2: int) -> None:
-        # Time complexity: O(1)
-        self._adjacency_matrix[vertex_1][vertex_2] = 0.0
+    def delete_edge(self, index_1: int, index_2: int) -> None:
+        # O(1)
+        self._adjacency_matrix[index_1][index_2] = 0.0
 
 
 class _PointersAndObjects(_GraphRepresentation):
     """Pointers and Objects graph representation.
 
-    Uses a pointer list of length V to keep track of vertices. Each `Vertex`
+    Uses a pointer list of length V to keep track of nodes. Each `Node`
     is an object that holds a list of its neighbors.
 
     Complexity
@@ -322,85 +315,76 @@ class _PointersAndObjects(_GraphRepresentation):
     """
 
     def __init__(self) -> int:
-        self._vertices: list[_Vertex] = []
+        self._nodes: list[_Node] = []
 
     @property
-    def n_vertices(self) -> int:
-        return len(self._vertices)
+    def num_nodes(self) -> int:
+        return len(self._nodes)
 
-    def iterate_neighbors(self, vertex: int) -> Iterator[_VertexAndWeight]:
-        # Time complexity: O(E)
-        for vertex_and_neighbor in self._vertices[vertex]:
-            yield _VertexAndWeight(vertex_and_neighbor.vertex.index, vertex_and_neighbor.weight)
+    def iterate_neighbors(self, index: int) -> Iterator[_NodeAndWeight]:
+        # O(E)
+        for neighbor, weight in self._nodes[index]:
+            yield _NodeAndWeight(neighbor.index, weight)
 
-    def add_vertex(self) -> None:
-        # Time complexity: O(1)
-        self._vertices.append(_Vertex(index=self.n_vertices))
+    def add_node(self) -> None:
+        # O(1)
+        self._nodes.append(_Node(index=self.num_nodes))
 
-    def remove_vertex(self, vertex: int) -> None:
-        # Time complexity: O(V)
-        self._vertices.pop(vertex)
-        for index, vertix in enumerate(self._vertices):
-            vertix.index = index
+    def delete_node(self, index: int) -> None:
+        # O(V)
+        del self._nodes[index]
+        for index, node in enumerate(self._nodes):
+            node.index = index
 
-    def has_edge(self, vertex_1: int, vertex_2: int) -> bool:
-        # Time complexity: O(E)
-        return self._vertices[vertex_1].has_neighbor(self._vertices[vertex_2])
+    def has_edge(self, index_1: int, index_2: int) -> bool:
+        # O(E)
+        return self._nodes[index_1].has_neighbor(self._nodes[index_2])
 
-    def get_edge(self, vertex_1: int, vertex_2: int) -> float:
-        return self._vertices[vertex_1].get_neighbor_weight(vertex_2)
+    def get_edge(self, index_1: int, index_2: int) -> WeightType:
+        # O(E)
+        return self._nodes[index_1].get_neighbor_weight(index_2)
 
-    def add_edge(self, vertex_1: int, vertex_2: int, *, weight: float) -> None:
-        # Time complexity: O(E)
-        self._vertices[vertex_1].add_neighbor(self._vertices[vertex_2], weight=weight)
+    def add_edge(self, index_1: int, index_2: int, *, weight: WeightType) -> None:
+        # O(E)
+        self._nodes[index_1].add_neighbor(self._nodes[index_2], weight=weight)
 
-    def remove_edge(self, vertex_1: int, vertex_2: int) -> None:
-        # Time complexity: O(E)
-        self._vertices[vertex_1].remove_neighbor(self._vertices[vertex_2])
+    def delete_edge(self, index_1: int, index_2: int) -> None:
+        # O(E)
+        self._nodes[index_1].delete_neighbor(self._nodes[index_2])
 
 
-class _Vertex:
+class _Node:
     def __init__(self, index: int) -> None:
         self.index = index
-        self._neighbors: list[_VertexAndWeight] = []
+        self._neighbors: list[tuple[Self, WeightType]] = []
 
-    def __iter__(self) -> Iterator[_VertexAndWeight]:
-        # Time complexity: O(E)
+    def __iter__(self) -> Iterator[tuple[Self, WeightType]]:
+        # O(E)
         yield from self._neighbors
 
-    def has_neighbor(self, vertex: _Vertex) -> bool:
-        # Time complexity: O(E)
-        assert vertex is not self
-        return any(vertex is neighbor.vertex for neighbor in self._neighbors)
+    def has_neighbor(self, node: _Node) -> bool:
+        # O(E)
+        assert node is not self
+        return any(node is neighbor for neighbor, _ in self._neighbors)
 
-    def get_neighbor_weight(self, vertex: _Vertex) -> float:
-        assert self.has_neighbor(vertex)
-        for vertex_and_weight in self:
-            if vertex_and_weight.vertex is vertex:
-                return vertex_and_weight.weight
+    def get_neighbor_weight(self, node: _Node) -> WeightType:
+        # O(E)
+        assert self.has_neighbor(node)
+        for neighbor, weight in self:
+            if neighbor is node:
+                return weight
         raise AssertionError
 
-    def add_neighbor(self, vertex: _Vertex, *, weight: float) -> None:
-        # Time complexity: O(E)
-        assert not self.has_neighbor(vertex)
-        _add_element_sorted(self._neighbors, _VertexAndWeight(vertex, weight), key=lambda t: getattr(t.vertex, "index"))
+    def add_neighbor(self, node: _Node, *, weight: WeightType) -> None:
+        # O(E)
+        assert not self.has_neighbor(node)
+        self._neighbors.append((node, weight))
+        self._neighbors.sort(key=lambda t: t[0].index)
 
-    def remove_neighbor(self, vertex: _Vertex) -> None:
-        # Time complexity: O(E)
-        for vertex_and_weight in self:
-            self._neighbors.remove(vertex_and_weight)
-            return
+    def delete_neighbor(self, node: _Node) -> None:
+        # O(E)
+        for neighbor, weight in self:
+            if neighbor is node:
+                self._neighbors.remove((neighbor, weight))
+                return
         raise AssertionError
-
-
-_T = TypeVar("_T")
-
-
-def _add_element_sorted(sequence: Sequence[_T], element: _T, *, key: Callable[[_T], numbers.Number]) -> None:
-    index_to_insert = 0
-    for index, neighbor in enumerate(sequence):
-        if key(neighbor) == key(element):
-            return
-        if key(neighbor) < key(element):
-            index_to_insert = index + 1
-    sequence.insert(index_to_insert, element)

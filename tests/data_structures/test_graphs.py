@@ -26,23 +26,23 @@ def test_graph_add_value(directed: bool, representation: str) -> None:
 
 @pytest.mark.parametrize("directed", [True, False], ids=["directed", "undirected"])
 @pytest.mark.parametrize("representation", ["adjacency_list", "adjacency_matrix", "pointers_and_objects"])
-def test_graph_remove_value(directed: bool, representation: str) -> None:
+def test_graph_delete_value(directed: bool, representation: str) -> None:
     graph = graphs.Graph(representation=representation, directed=directed)
     graph.add_value("1")
     graph.add_value("2")
     assert graph.has_value("1")
     assert graph.has_value("2")
 
-    graph.remove_value("1")
+    graph.delete_value("1")
     assert not graph.has_value("1")
     assert graph.has_value("2")
 
-    graph.remove_value("2")
+    graph.delete_value("2")
     assert not graph.has_value("1")
     assert not graph.has_value("2")
 
     with pytest.raises(AssertionError):
-        graph.remove_value("1")
+        graph.delete_value("1")
 
 
 @pytest.mark.parametrize("directed", [True, False], ids=["directed", "undirected"])
@@ -69,7 +69,7 @@ def test_graph_add_connection(directed: bool, representation: str) -> None:
 
 @pytest.mark.parametrize("directed", [True, False], ids=["directed", "undirected"])
 @pytest.mark.parametrize("representation", ["adjacency_list", "adjacency_matrix", "pointers_and_objects"])
-def test_graph_remove_connection(directed: bool, representation: str) -> None:
+def test_graph_delete_connection(directed: bool, representation: str) -> None:
     graph = graphs.Graph(representation=representation, directed=directed)
     graph.add_value("1")
     graph.add_value("2")
@@ -80,12 +80,12 @@ def test_graph_remove_connection(directed: bool, representation: str) -> None:
     else:
         assert graph.has_connection("2", "1")
 
-    graph.remove_connection("1", "2")
+    graph.delete_connection("1", "2")
     assert not graph.has_connection("1", "2")
     assert not graph.has_connection("2", "1")
 
     with pytest.raises(AssertionError):
-        graph.remove_connection("1", "2")
+        graph.delete_connection("1", "2")
 
 
 @pytest.mark.parametrize("directed", [True, False], ids=["directed", "undirected"])
