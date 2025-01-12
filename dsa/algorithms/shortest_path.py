@@ -9,19 +9,19 @@ from dsa.data_structures import graphs
 
 
 class PathAndDistance(NamedTuple):
-    path: list[graphs.GraphElementType]
-    distance: float
+    path: list[graphs.ValueType]
+    distance: graphs.WeightType
 
 
-class shortest_path_algorithm(Protocol):
-    def __call__(
-        self, graph: graphs.Graph, *, vertex_source: graphs.GraphElementType, vertex_target: graphs.GraphElementType
-    ) -> PathAndDistance: ...
+class ShortestPathAlgorithm(Protocol):
+    """Find shortest path and distance between two nodes in a weighted graph."""
+
+    def __call__(self, graph: graphs.Graph, source: graphs.ValueType, target: graphs.ValueType) -> PathAndDistance: ...
 
 
 def no_guess_min_distance_from_target(
-    graph: graphs.Graph, source: graphs.GraphElementType, target: graphs.GraphElementType
-) -> float:
+    graph: graphs.Graph, source: graphs.ValueType, target: graphs.ValueType
+) -> graphs.WeightType:
     # When no educated guess can be made for the distance between `source` and
     # `target`, the A* search algorithm reduces to Dijkstra's algorithm.
     return 0.0
@@ -29,32 +29,31 @@ def no_guess_min_distance_from_target(
 
 def a_star_search_algorithm(
     graph: graphs.Graph,
-    *,
-    vertex_source: graphs.GraphElementType,
-    vertex_target: graphs.GraphElementType,
+    source: graphs.ValueType,
+    target: graphs.ValueType,
     guess_min_distance_from_target: Callable[
-        [graphs.Graph, graphs.GraphElementType, graphs.GraphElementType], float
+        [graphs.Graph, graphs.ValueType, graphs.ValueType], graphs.WeightType
     ] = no_guess_min_distance_from_target,
 ) -> PathAndDistance:
-    """A* search algorithm for finding shortest path between two vertices.
+    """A* search algorithm for finding shortest path between two nodes.
 
     Logic
     -----
     The algorithm consists of the following steps:
-    1. Set current vertex to source vertex
-    2. Go through neighboring vertices not yet visited, and:
+    1. Set current node to source node
+    2. Go through neighboring nodes not yet visited, and:
       a. For each neighbor compute total distance from source to neighbor,
-         with current vertex as the second to last vertex of the path
+         with current node as the second to last node of the path
       b. Add the estimated distance between the neighbor and the target
       c. If total distance is smaller than previously stored one, this becomes
          the new shortest path from source to neighbor
-    3. Find vertex with shortest distance out of all unvisited vertices, and
+    3. Find node with shortest distance out of all unvisited nodes, and
        move to that one
     4. Repeat 2-3 until target is encountered. Then compute and return shortest
        path and distance.
 
     `guess_min_distance_from_target` is a problem-specific heuristic function
-    for estimating the distance of a given vertex from the target vertex. If it
+    for estimating the distance of a given node from the target node. If it
     is admissible, i.e., it never overestimates the actual distance, it is
     guaranteed to lead to the right solution.
 
@@ -68,49 +67,47 @@ def a_star_search_algorithm(
     """
     # Step 1: Initialize
     # We use a min-priority queue for efficiency (original uses set)
-    unvisited_vertices_min_priority_queue = [(0.0, vertex_source)]
+    unvisited_nodes = [(0.0, source)]
     # Used to reconstruct the final path
-    vertex_to_min_previous_vertex: dict[graphs.GraphElementType, graphs.GraphElementType] = {}
-    # g-score: minimum computed distance of a vertex from the source
-    vertex_to_min_distance_from_source = collections.defaultdict(lambda: math.inf)
-    vertex_to_min_distance_from_source[vertex_source] = 0.0
-    # f-score: minimum estimated distance of a vertex from the source
-    vertex_to_min_distance_from_source_to_target = collections.defaultdict(lambda: math.inf)
-    vertex_to_min_distance_from_source_to_target[vertex_source] = guess_min_distance_from_target(
-        graph, vertex_source, vertex_target
-    )
+    node_to_min_previous_node: dict[graphs.ValueType, graphs.ValueType] = {}
+    # g-score: computed min distance of a node from the source
+    node_to_min_distance_from_source = collections.defaultdict(lambda: math.inf)
+    node_to_min_distance_from_source[source] = 0.0
+    # f-score: estimated min distance from source to target through node
+    node_to_min_distance_from_source_to_target = collections.defaultdict(lambda: math.inf)
+    node_to_min_distance_from_source_to_target[source] = guess_min_distance_from_target(graph, source, target)
 
-    while unvisited_vertices_min_priority_queue:
-        # Step 2: Move to unvisited vertex with smallest estimated distance
+    while unvisited_nodes:
+        # Step 2: Move to unvisited node with smallest estimated distance
         # between source and target
-        _, vertex_current = heapq.heappop(unvisited_vertices_min_priority_queue)
+        _, current = heapq.heappop(unvisited_nodes)
 
         # Stop if target has been visited
-        if vertex_current == vertex_target:
+        if current == target:
             break
 
-        # Step 3: Update distance for neighboring unvisited vertices, if smaller
-        distance_source_to_current = vertex_to_min_distance_from_source[vertex_current]
-        for vertex_neighbor, distance_current_to_neighbor in graph.iterate_neighbors(vertex_current):
+        # Step 3: Update distance for neighboring unvisited nodes, if smaller
+        distance_source_to_current = node_to_min_distance_from_source[current]
+        for neighbor, distance_current_to_neighbor in graph.iterate_neighbors(current):
             distance_source_to_neighbor = distance_source_to_current + distance_current_to_neighbor
-            if distance_source_to_neighbor < vertex_to_min_distance_from_source[vertex_neighbor]:
-                vertex_to_min_previous_vertex[vertex_neighbor] = vertex_current
-                vertex_to_min_distance_from_source[vertex_neighbor] = distance_source_to_neighbor
-                vertex_to_min_distance_from_source_to_target[vertex_neighbor] = (
-                    distance_source_to_neighbor + guess_min_distance_from_target(graph, vertex_neighbor, vertex_target)
+            if distance_source_to_neighbor < node_to_min_distance_from_source[neighbor]:
+                node_to_min_previous_node[neighbor] = current
+                node_to_min_distance_from_source[neighbor] = distance_source_to_neighbor
+                node_to_min_distance_from_source_to_target[neighbor] = (
+                    distance_source_to_neighbor + guess_min_distance_from_target(graph, neighbor, target)
                 )
                 heapq.heappush(
-                    unvisited_vertices_min_priority_queue,
-                    (vertex_to_min_distance_from_source_to_target[vertex_neighbor], vertex_neighbor),
+                    unvisited_nodes,
+                    (node_to_min_distance_from_source_to_target[neighbor], neighbor),
                 )
 
-    assert vertex_current == vertex_target, "Source and target are not connected"
+    assert current == target, "Source and target are not connected"
 
     # Step 4: Recover shortest path and distance
-    shortest_path = [vertex_target]
-    vertex_current = vertex_target
-    while vertex_current in vertex_to_min_previous_vertex:
-        vertex_current = vertex_to_min_previous_vertex[vertex_current]
-        shortest_path.insert(0, vertex_current)
-    shortest_distance = vertex_to_min_distance_from_source[vertex_target]
+    shortest_path = [target]
+    current = target
+    while current in node_to_min_previous_node:
+        current = node_to_min_previous_node[current]
+        shortest_path.insert(0, current)
+    shortest_distance = node_to_min_distance_from_source[target]
     return PathAndDistance(shortest_path, shortest_distance)
