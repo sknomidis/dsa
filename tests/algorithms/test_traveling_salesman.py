@@ -13,7 +13,7 @@ from dsa.data_structures import graphs
     ids=lambda f: f.__name__,
 )
 def test_traveling_salesman(algorithm: traveling_salesman.TravelingSalesmanAlgorithm) -> None:
-    graph = graphs.Graph(representation="adjacency_matrix", directed=False)
+    graph = graphs.Graph(directed=False)
     graph.add_value("city_1")
     graph.add_value("city_2")
     graph.add_value("city_3")

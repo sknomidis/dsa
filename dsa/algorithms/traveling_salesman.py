@@ -15,13 +15,13 @@ class TravelingSalesmanAlgorithm(Protocol):
     returns to the origin city?
 
     The input to the problem is a complete graph, meaning there is an edge
-    between any pair of vertices.
+    between any pair of nodes.
     """
 
-    def __call__(self, graph: graphs.Graph) -> tuple[list[graphs.GraphElementType], float]: ...
+    def __call__(self, graph: graphs.Graph) -> tuple[list[graphs.ValueType], graphs.WeightType]: ...
 
 
-def traveling_salesman_brute_force(graph: graphs.Graph) -> tuple[list[graphs.GraphElementType], float]:
+def traveling_salesman_brute_force(graph: graphs.Graph) -> tuple[list[graphs.ValueType], graphs.WeightType]:
     """Brute force approach to the TSP.
 
     Consider all possible paths, and compute the corresponding distance. Select
@@ -34,7 +34,7 @@ def traveling_salesman_brute_force(graph: graphs.Graph) -> tuple[list[graphs.Gra
     """
 
     distance_min = math.inf
-    path_min: list[graphs.GraphElementType] = []
+    path_min: list[graphs.ValueType] = []
 
     for cities in itertools.permutations(graph.values):
         # We need to return to starting city
@@ -53,7 +53,7 @@ def traveling_salesman_brute_force(graph: graphs.Graph) -> tuple[list[graphs.Gra
     return path_min, distance_min
 
 
-def traveling_salesman_recursion(graph: graphs.Graph) -> tuple[list[graphs.GraphElementType], float]:
+def traveling_salesman_recursion(graph: graphs.Graph) -> tuple[list[graphs.ValueType], graphs.WeightType]:
     """Recursion approach to the TSP.
 
     Recursively go through all possible city permutations, by considering all
@@ -69,8 +69,8 @@ def traveling_salesman_recursion(graph: graphs.Graph) -> tuple[list[graphs.Graph
     city_start = cities_all[0]
 
     def compute_min_path_and_distance(
-        city_current: graphs.GraphElementType, path_covered: list[graphs.GraphElementType], distance_covered: float
-    ) -> tuple[list[graphs.GraphElementType], float]:
+        city_current: graphs.ValueType, path_covered: list[graphs.ValueType], distance_covered: graphs.WeightType
+    ) -> tuple[list[graphs.ValueType], float]:
         if len(path_covered) == len(cities_all):
             # Return to starting city
             path_covered.append(city_start)
@@ -78,7 +78,7 @@ def traveling_salesman_recursion(graph: graphs.Graph) -> tuple[list[graphs.Graph
             return path_covered, distance_covered
 
         distance_min = math.inf
-        path_min: list[graphs.GraphElementType] = []
+        path_min: list[graphs.ValueType] = []
         for city_next in cities_all:
             # Go through all unvisited cities
             if city_next in path_covered:
