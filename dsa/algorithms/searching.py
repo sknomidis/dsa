@@ -109,8 +109,7 @@ def binary_search_iterative(array: list[ValueType], value: ValueType) -> int:
         if value == array[index_middle]:
             # Value found
             return index_middle
-
-        if value < array[index_middle]:
+        elif value < array[index_middle]:
             # Search in left subarray
             index_right = index_middle
         else:
